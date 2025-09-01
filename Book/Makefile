@@ -1,4 +1,4 @@
-CODE_DIR = ~/Git/Fife
+CODE_DIR = ../Code
 
 .PHONY: help
 help:

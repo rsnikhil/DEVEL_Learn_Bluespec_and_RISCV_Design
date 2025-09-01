@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Authors: Rishiyur S. Nikhil, ...
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package S1_Fetch;
 
@@ -67,10 +66,13 @@ module mkFetch (Fetch_IFC);
    // Backward in
    FIFOF #(Fetch_from_Retire) f_Fetch_from_Retire <- mkPipelineFIFOF;
 
-   // inum, PC and epoch registers
-   Reg #(Bit #(64))       rg_inum  <- mkReg (0);
-   Reg #(Bit #(XLEN))     rg_pc    <- mkReg (0);
-   Reg #(Bit #(W_Epoch))  rg_epoch <- mkReg (0);
+   // PC and epoch registers
+   Reg #(Bit #(XLEN))     rg_pc        <- mkReg (0);
+   Reg #(Bit #(W_Epoch))  rg_epoch     <- mkReg (0);
+   // instr seq number = fetch number (including speculative fetches)
+   Reg #(Bit #(64))       rg_inum      <- mkReg (0);
+   // architectural instr seq number (excluding speculative fetches)
+   Reg #(Bit #(64))       rg_arch_inum <- mkReg (0);
 
    // One-instr-at-a-time (unpipelined) control                             // \belide{3}
    Reg #(Bool) rg_oiaat       <- mkReg (False);
@@ -86,12 +88,13 @@ module mkFetch (Fetch_IFC);
                                                                             // \eelide
       // Predict next PC
       let pred_pc = rg_pc + 4;
-      let y <- fn_Fetch (rg_pc, pred_pc, rg_epoch, rg_inum, rg_flog);
+      let y <- fn_Fetch (rg_pc, pred_pc, rg_epoch, rg_inum, rg_arch_inum, rg_flog);
       f_Fetch_to_Decode.enq (y.to_D);
       f_Fetch_to_IMem.enq (y.mem_req);
 
-      rg_pc   <= pred_pc;
-      rg_inum <= rg_inum + 1;
+      rg_pc        <= pred_pc;
+      rg_inum      <= rg_inum + 1;
+      rg_arch_inum <= rg_arch_inum + 1;
                                                                             // \belide{6}
       // If one-instr-at-a-time, disable fetching
       // (will be re-enabled by rl_Fetch_from_Retire)
@@ -103,8 +106,11 @@ module mkFetch (Fetch_IFC);
    // Backward flow: redirection from Retire
    rule rl_Fetch_from_Retire ((! rg_oiaat) || (! rg_oiaat_fetch));
       let x <- pop_o (to_FIFOF_O (f_Fetch_from_Retire));
-      rg_pc    <= x.next_pc;
-      rg_epoch <= x.next_epoch;
+      rg_pc        <= x.next_pc;
+      rg_epoch     <= x.next_epoch;
+      let arch_rollback = rg_inum - x.xtra.inum - 1;
+      let new_arch_inum = rg_arch_inum - arch_rollback;
+      rg_arch_inum <= new_arch_inum;
 
       // Debugger support
       if (x.haltreq) begin

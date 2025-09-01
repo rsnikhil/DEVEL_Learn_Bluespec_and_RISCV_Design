@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Mem_Req_Rsp;
 
@@ -8,6 +7,10 @@ package Mem_Req_Rsp;
 import Arch        :: *;
 import Instr_Bits  :: *;
 import Inter_Stage :: *;
+
+// ****************************************************************
+
+`include "Mem_Req_Rsp_Xtra.bsvi"
 
 // ****************************************************************
 // Memory requests
@@ -20,6 +23,7 @@ typedef Bit #(5) Mem_Req_Type;
 
 function Fmt fshow_Mem_Req_Type (Mem_Req_Type mrt);
    return case (mrt)
+	     funct5_FETCH:   $format ("FETCH");
 	     funct5_LOAD:    $format ("LOAD");
 	     funct5_STORE:   $format ("STORE");
 	     funct5_FENCE:   $format ("FENCE");
@@ -48,25 +52,13 @@ typedef struct {Mem_Req_Type  req_type;                       // \blatex{Mem_Req
 		Bit #(64)     addr;
 		Bit #(64)     data;     // CPU => mem data
                                                                 // \belide{16}
-		Epoch         epoch;    // Fife only: for store-buffer matching
+		// Fife only: for DMem store-buffer matching,
+		// and for TestRIG fetching
+		Epoch         epoch;
 
-		Bit #(64)     inum;     // for debugging only
-		Bit #(XLEN)   pc;       // for debugging only
-		Bit #(32)     instr;    // for debugging only      \eelide
+		Mem_Req_Xtra  xtra;                             // \eelide
 } Mem_Req
 deriving (Bits, FShow);                                       // \elatex{Mem_Req}
-
-// ----------------
-
-function Bool misaligned (Mem_Req  mem_req);
-   let addr = mem_req.addr;
-   return case (mem_req.size)
-	     MEM_1B: False;
-	     MEM_2B: addr[0]   != 0;
-	     MEM_4B: addr[1:0] != 0;
-	     MEM_8B: addr[2:0] != 0;
-	  endcase;
-endfunction
 
 // ****************************************************************
 // Memory responses
@@ -81,18 +73,37 @@ typedef enum {MEM_RSP_OK,                                // \blatex{Mem_Rsp_Type
 deriving (Bits, FShow, Eq);                              // \elatex{Mem_Rsp_Type}
 
 typedef struct {Mem_Rsp_Type  rsp_type;                        // \blatex{Mem_Rsp}
-		Bit #(64)     data;      // mem => CPU data
-                                                                 //  \belide{16}
-		// Copied from mem_req, for debugging only
-		Mem_Req_Type  req_type;
-		Mem_Req_Size  size;
-		Bit #(64)     addr;
+		Bit #(64)     data;      // mem => CPU data or DEFERRED
 
-		Bit #(64)     inum;     // for debugging only
-		Bit #(XLEN)   pc;       // for debugging only
-		Bit #(32)     instr;    // for debugging only    // \eelide
+		Mem_Req_Type  req_type;  // for DEFERRED
+		Mem_Req_Size  size;      // for DEFERRED
+		Bit #(64)     addr;      // is also tval if not OK
+
+                                                                 // \belide{16}
+		Mem_Rsp_Xtra  xtra;                              // \eelide
 } Mem_Rsp
 deriving (Bits, FShow);                                        // \elatex{Mem_Rsp}
+
+// ****************************************************************
+// Retire => DMem commit/discard (store-buffer)
+
+typedef struct {Bool      commit;    // True:commit, False:discard
+		Bit #(64) inum;      // For debugging only
+} Retire_to_DMem_Commit
+deriving (Bits, FShow);
+
+// ****************************************************************
+// Help-function to test for mis-aligned addresses
+
+function Bool misaligned (Mem_Req  mem_req);
+   let addr = mem_req.addr;
+   return case (mem_req.size)
+	     MEM_1B: False;
+	     MEM_2B: addr[0]   != 0;
+	     MEM_4B: addr[1:0] != 0;
+	     MEM_8B: addr[2:0] != 0;
+	  endcase;
+endfunction
 
 // ****************************************************************
 // Alternate fshow functions
@@ -108,29 +119,33 @@ function Fmt fshow_Mem_Req_Size (Mem_Req_Size x);
 endfunction
 
 function Fmt fshow_Mem_Req (Mem_Req x);
-   let fmt = $format ("    Mem_Req {I_%0d pc:%08h instr:%08h ", x.inum, x.pc, x.instr);
+   let fmt = $format ("    Mem_Req {I_%0d pc:%08h instr:%08h ",
+		      x.xtra.inum, x.xtra.pc, x.xtra.instr);
    fmt = fmt + fshow_Mem_Req_Type (x.req_type);
    fmt = fmt + $format (" ");
    fmt = fmt + fshow_Mem_Req_Size (x.size);
    fmt = fmt + $format (" addr:%08h", x.addr);
-   if ((x.req_type != funct5_LOAD)
+   if ((x.req_type != funct5_FETCH)
+       && (x.req_type != funct5_LOAD)
        && (x.req_type != funct5_LR)
        && (x.req_type != funct5_FENCE)
        && (x.req_type != funct5_FENCE_I))
-      fmt = fmt + $format (" data:%08h", x.data);
+      fmt = fmt + $format (" wdata:%08h", x.data);
    fmt = fmt + $format (" epoch:%0d}", x.epoch);
    return fmt;
 endfunction
 
 function Fmt fshow_Mem_Rsp (Mem_Rsp x, Bool show_data);
-   let fmt = $format ("    Mem_Rsp {I_%0d pc:%08h instr:%08h ", x.inum, x.pc, x.instr);
+   let fmt = $format ("    Mem_Rsp {");
+   fmt = fmt + fshow (x.rsp_type);
+   fmt = fmt + $format (" addr:%08h", x.addr);
+   if (show_data)
+      fmt = fmt + $format (" rdata:%08h", x.data);
+   fmt = fmt + $format (" I_%0d pc:%08h instr:%08h ",
+			x.xtra.inum, x.xtra.pc, x.xtra.instr);
    fmt = fmt + fshow_Mem_Req_Type (x.req_type);
    fmt = fmt + $format (" ");
    fmt = fmt + fshow_Mem_Req_Size (x.size);
-   fmt = fmt + $format (" addr:%08h ", x.addr);
-   fmt = fmt + fshow (x.rsp_type);
-   if (show_data)
-      fmt = fmt + $format (" data:%08h", x.data);
    fmt = fmt + $format ("}");
    return fmt;
 endfunction

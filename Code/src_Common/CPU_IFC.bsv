@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package CPU_IFC;
 
@@ -19,9 +18,11 @@ import Semi_FIFOF :: *;
 // ----------------
 // Local imports
 
-import Utils       :: *;
-import Mem_Req_Rsp :: *;
-import Inter_Stage :: *;
+import Utils          :: *;
+import Arch           :: *;
+import Mem_Req_Rsp    :: *;
+import Inter_Stage    :: *;
+import RVFI_DII_Types :: *;
 
 // ****************************************************************
                                                                 // \blatex{CPU_IFC}
@@ -49,6 +50,11 @@ interface CPU_IFC;
    (* always_ready, always_enabled *)
    method Action set_MIP_MTIP (Bit #(1) v);
 
+   // ----------------------------------------------------------------
+   // Output stream of RVFI reports (to verifier/logger)
+   interface FIFOF_O #(RVFI_DII_Execution #(XLEN, 64)) fo_rvfi_reports;
+
+   // ----------------------------------------------------------------
    // Debugger support
    // Requests from/responses to remote debugger
    interface FIFOF_I #(Dbg_to_CPU_Pkt)   fi_dbg_to_CPU_pkt;

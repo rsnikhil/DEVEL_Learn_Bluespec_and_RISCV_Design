@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package CPU;
 
@@ -43,6 +42,9 @@ import Fn_Dispatch :: *;
 
 import Fn_EX_Control :: *;
 import Fn_EX_Int     :: *;
+
+import RVFI_DII_Types :: *;    // For 'RVFI_DII_Execution' struct
+import RVFI_Report    :: *;
 
 // ****************************************************************
 // Debugger control
@@ -141,6 +143,11 @@ module mkCPU (CPU_IFC);
    Bool is_running = (rg_runstate != CPU_HALTED);
    Bool is_halted  = (rg_runstate == CPU_HALTED);
                                                                 // \elatex{Drum_mkCPU_STATE}
+   // ****************************************************************
+   // RVFI reporting
+
+   RVFI_Report_IFC rvfi_report <- mkRVFI_Report;
+
    // ****************************************************************
    // BEHAVIOR: Actions
 
@@ -332,6 +339,8 @@ module mkCPU (CPU_IFC);
 	 csrs.ma_incr_instret;
       end
                                                                         // \belide{6}
+      rvfi_report.rvfi_Control (x_control.exception, x_direct,
+				x_control, csrs.mv_instret);
       log_Retire_Control (rg_flog, x_control.exception,
 			  x_direct, x_control);                         // \eelide
    endaction;                                                   // \elatex{Drum_Retire_Control}
@@ -359,6 +368,10 @@ module mkCPU (CPU_IFC);
 	 csrs.ma_incr_instret;
       end
                                                                         // \belide{6}
+      rvfi_report.rvfi_Int (rg_EX_to_Retire.exception,
+			    rg_Dispatch.to_Retire,
+			    rg_EX_to_Retire,
+			    csrs.mv_instret);
       log_Retire_Int (rg_flog, rg_EX_to_Retire.exception,
 		      rg_Dispatch.to_Retire, rg_EX_to_Retire);          // \eelide
    endaction;                                                   // \elatex{Drum_Retire_Int}
@@ -413,6 +426,7 @@ module mkCPU (CPU_IFC);
 	 csrs.ma_incr_instret;
       end
                                                                         // \belide{6}
+      rvfi_report.rvfi_DMem (exception, x_direct, mem_rsp, csrs.mv_instret);
       log_DMem_NS_rsp (rg_flog, exception, x_direct, mem_rsp);          // \eelide
    endaction;                                                   // \elatex{Drum_Retire_DMem}
 
@@ -507,6 +521,11 @@ module mkCPU (CPU_IFC);
 
    method Action set_MIP_MTIP (Bit #(1) v) = csrs.set_MIP_MTIP (v);
 
+   // ----------------------------------------------------------------
+   // Output stream of RVFI reports (to verifier/logger)
+   interface FIFOF_O fo_rvfi_reports = rvfi_report.fo_rvfi_reports;
+
+   // ----------------------------------------------------------------
    // Debugger support
    // Requests from/responses to remote debugger
    interface fi_dbg_to_CPU_pkt   = to_FIFOF_I (f_dbg_to_CPU_pkt);

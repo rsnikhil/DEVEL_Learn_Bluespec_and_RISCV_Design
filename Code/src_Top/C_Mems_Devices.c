@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil, Inc.  All Rights Reserved.
 
 // ****************************************************************
 // Imported C functions for a memory-model
@@ -44,8 +43,9 @@ static int verbosity_MMIO       = 0;
 // ****************************************************************
 // WARNING: THESE CODES SHOULD BE IDENTICAL TO THOSE IN Instr_Bits.bsv
 
-// The following are pseudo funct5s for LOAD, STORE, FENCE, FENCE_I
+// The following are pseudo funct5s for FETCH, LOAD, STORE, FENCE, FENCE_I
 // used in Mem_Req (these funct5s are unused by AMO codings)
+#define funct5_FETCH    0x06    // 00110
 #define funct5_LOAD     0x1E    // 11110
 #define funct5_STORE    0x1F    // 11111
 #define funct5_FENCE    0x1D    // 11101
@@ -105,15 +105,12 @@ void fprintf_client (FILE *fp, const char *pre, const uint32_t client, const cha
 // System address map and components
 
 // ----------------
-// Memory
+// Memory (these are initialized dynamically in c_mems_devices_init()
 
-#define ADDR_BASE_MEM  0x80000000
-#define SIZE_B_MEM     0x10000000
+static uint64_t addr_base_mem = 0;
+static uint64_t size_B_mem    = 0;
 
-// #define ADDR_BASE_MEM  0x00000000
-// #define SIZE_B_MEM     0x00010000
-
-static uint8_t mem_array [SIZE_B_MEM];
+static uint8_t *mem_array = NULL;
 
 // ----------------
 // UART
@@ -142,11 +139,12 @@ void fprint_mems_devices_info (FILE *fp)
 {
     fprintf (fp, "  Mem system model\n");
 
-    fprintf (fp, "   ADDR_BASE_MEM:  0x%08x", ADDR_BASE_MEM);
-    fprintf (fp, " SIZEB_MEM:  0x%08x (%0d) bytes\n", SIZE_B_MEM, SIZE_B_MEM);
+    fprintf (fp, "   addr_base_mem:  0x%08" PRIx64, addr_base_mem);
+    fprintf (fp, " size_B_mem:  0x%08" PRIx64 " (%0" PRId64 ") bytes\n",
+	     size_B_mem, size_B_mem);
 
     fprintf (fp, "   ADDR_BASE_UART: 0x%08x", ADDR_BASE_UART);
-    fprintf (fp, " SIZEB_UART: 0x%08x (%0d) bytes\n", SIZE_B_UART, SIZE_B_UART);
+    fprintf (fp, " SIZE_B_UART: 0x%08x (%0d) bytes\n", SIZE_B_UART, SIZE_B_UART);
 }
 
 // Print byte-array data, with special case as integer if <= 8 bytes
@@ -183,6 +181,7 @@ void fprint_mem_req (FILE *fp,
     switch (req_type) {
     case funct5_FENCE:   fprintf (fp, " FENCE");   print_wdata = false; break;
     case funct5_FENCE_I: fprintf (fp, " FENCE.I"); print_wdata = false; break;
+    case funct5_FETCH:   fprintf (fp, " FETCH");   print_wdata = false; break;
     case funct5_LOAD:    fprintf (fp, " LOAD");    print_wdata = false; break;
     case funct5_STORE:   fprintf (fp, " STORE");   break;
     case funct5_LR:      fprintf (fp, " LR");      print_wdata = false; break;
@@ -269,14 +268,14 @@ void load_memhex32 (int verbosity)
 	}
 	else if (isxdigit (linebuf [0])) {
 	    uint32_t x = parse_hex (linebuf);
-	    if ((addr - ADDR_BASE_MEM) > (SIZE_B_MEM - 4)) {
+	    if ((addr - addr_base_mem) > (size_B_mem - 4)) {
 		fprintf (stdout,
 			 "ERROR: load_memhex32(): addr 0x%08" PRIx64 " out of bounds\n", addr);
 		fprintf (stdout,
-			 "       Mem size is 0x%08x\n", SIZE_B_MEM);
+			 "       Mem size is 0x%08" PRIx64 "\n", size_B_mem);
 		exit (1);
 	    }
-	    memcpy (& (mem_array [addr - ADDR_BASE_MEM]), & x, 4);
+	    memcpy (& (mem_array [addr - addr_base_mem]), & x, 4);
 	    if (verbosity > 1)
 		fprintf (stdout, "Loading mem [%08" PRIx64 "] <= %08x\n", addr, x);
 	    addr += 4;
@@ -306,9 +305,9 @@ void c_access_mem (uint8_t        *result_p,
     uint32_t *status_p = (uint32_t *) result_p;
     *status_p = MEM_RSP_OK;
 
-    uint8_t *mem_ptr = & (mem_array [addr - ADDR_BASE_MEM]);
+    uint8_t *mem_ptr = & (mem_array [addr - addr_base_mem]);
 
-    if (req_type == funct5_LOAD) {
+    if ((req_type == funct5_FETCH) || (req_type == funct5_LOAD)) {
 	// rdata <= mem []
 	uint8_t *rdata_p = & (result_p [4]);
 
@@ -380,17 +379,27 @@ void c_access_UART (uint8_t        *result_p,
 #ifdef __cplusplus
 // 'C' linkage is necessary for linking with Verilator object files
 extern "C" {
-void c_mems_devices_init (uint32_t dummy);
+void c_mems_devices_init (uint64_t addr_base, uint64_t size_B)
 }
 #endif
 
 // ----------------
 // One-time initializations, including reading ELF and memhex into memory
 
-void c_mems_devices_init (uint32_t dummy)
+void c_mems_devices_init (uint64_t addr_base, uint64_t size_B)
 {
+    // size_B_mem = 0x10000000;
+    addr_base_mem = addr_base;
+    size_B_mem    = size_B;
+
     fprintf (stdout, "INFO: %s\n", __FUNCTION__);
     fprint_mems_devices_info (stdout);
+
+    mem_array = (uint8_t *) malloc (size_B_mem);
+    if (mem_array == NULL) {
+	fprintf (stdout, "ERROR: unable to malloc C array for memory\n");
+	exit (1);
+    }
 
     // TODO: load multiple ELFs/memhex32s
     const int verbosity = 0;
@@ -427,7 +436,7 @@ void c_mems_devices_req_rsp (uint8_t        *result_p,
 // wdata_p is a pointer to data to memory (for STORE, SC, AMOxxx)
 // BSV result is a pointer in first arg of C function; points to:
 //     32b (4 bytes) of status (OK, MISALIGNED, ERR)
-//     followed by at least 64b (8 bytes) of data to CPU (for LOAD, LR, SC, AMOxxx)
+//     followed by at least 64b (8 bytes) of data to CPU (for FETCH, LOAD, LR, SC, AMOxxx)
 // client is 0 for IMem, 1 for DMem, 2 for MMIO
 
 void c_mems_devices_req_rsp (uint8_t        *result_p,
@@ -452,8 +461,8 @@ void c_mems_devices_req_rsp (uint8_t        *result_p,
 	exit (1);
     }
 
-    const bool in_mem  = ((ADDR_BASE_MEM <= addr)
-			  && ((addr + size_B) <= (ADDR_BASE_MEM + SIZE_B_MEM)));
+    const bool in_mem  = ((addr_base_mem <= addr)
+			  && ((addr + size_B) <= (addr_base_mem + size_B_mem)));
     const bool in_UART = ((ADDR_BASE_UART <= addr)
 			  && ((addr + size_B) <= (ADDR_BASE_UART + SIZE_B_UART)));
     const bool in_GPIO = ((ADDR_BASE_GPIO <= addr)
@@ -473,6 +482,19 @@ void c_mems_devices_req_rsp (uint8_t        *result_p,
 	return;
     }
 
+    // Return error if misaligned
+    uint64_t mask = 1;
+    if ((addr & ((mask << req_size_code) - 1)) != 0) {
+	if (verbosity_misaligned != 0) {
+	    fprintf_client (stdout, "ERROR: c_mem_req(): misaligned address for ",
+			    client, "\n");
+	    fprint_mem_req (stdout, inum, req_type, size_B, addr, wdata_p);
+	}
+	uint32_t *status_p = (uint32_t *) result_p;
+	*status_p = MEM_RSP_MISALIGNED;
+	return;
+    }
+
     if ((! in_mem) && (! in_UART) && (! in_GPIO)) {
 	// If speculative (CLIENT_DMEM) defer; else error
 	uint32_t *status_p = (uint32_t *) result_p;
@@ -486,19 +508,6 @@ void c_mems_devices_req_rsp (uint8_t        *result_p,
 	    }
 	    *status_p = MEM_RSP_ERR;
 	}
-	return;
-    }
-
-    // Return error if misaligned
-    uint64_t mask = 1;
-    if ((addr & ((mask << req_size_code) - 1)) != 0) {
-	if (verbosity_misaligned != 0) {
-	    fprintf_client (stdout, "ERROR: c_mem_req(): misaligned address for ",
-			    client, "\n");
-	    fprint_mem_req (stdout, inum, req_type, size_B, addr, wdata_p);
-	}
-	uint32_t *status_p = (uint32_t *) result_p;
-	*status_p = MEM_RSP_MISALIGNED;
 	return;
     }
 

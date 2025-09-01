@@ -65,6 +65,11 @@ FIGS += Fig_Trap_Return.png
 FIGS += Fig_Two_Microarchitectures.png
 FIGS += Fig_What_is_an_ISA.png
 
+FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1.png
+FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L4.png
+FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L3.png
+FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L2_L3.png
+
 .PHONY: help
 help:
 	@echo "Targets:"
@@ -76,7 +81,72 @@ png: $(FIGS)
 %.png: %.svg
 	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
 
-# ----------------------------------------------------------------
+# ================================================================
+# Rules to extract selected layers of SVG into separate PNGs
+
+DIAGRAMS_2025 = $(HOME)/Diagrams/2025
+
+LAYER_1 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1; object-set-attribute:style, display:inline'
+
+%_L1.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYER_1) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYER_2 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer2; object-set-attribute:style, display:inline'
+
+%_L2.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYER_2) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYER_3 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer3; object-set-attribute:style, display:inline'
+
+%_L3.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYER_3) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYER_4 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer4; object-set-attribute:style, display:inline'
+
+%_L4.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYER_4) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_1_2 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1,layer2; object-set-attribute:style, display:inline'
+
+%_L1_L2.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_1_2) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_1_3 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1,layer3; object-set-attribute:style, display:inline'
+
+%_L1_L3.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_1_3) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_1_4 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1,layer4; object-set-attribute:style, display:inline'
+
+%_L1_L4.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_1_4) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_2_3 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer2,layer3; object-set-attribute:style, display:inline'
+
+%_L2_L3.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_2_3) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_1_2_3 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1,layer2,layer3; object-set-attribute:style, display:inline'
+
+%_L1_L2_L3.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_1_2_3) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+LAYERS_1_2_3_4 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1,layer2,layer3,layer4; object-set-attribute:style, display:inline'
+
+%_L1_L2_L3_L4.png: $(DIAGRAMS_2025)/%.svg
+	inkscape --actions=$(LAYERS_1_2_3_4) \
+		--export-filename=$@ --export-area-drawing  -d 300 -y 0.0 $<
+
+# ================================================================
 # Extract layers of SVG into multiple PNGs
 
 LAYER_1 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1; object-set-attribute:style, display:inline'

@@ -1,0 +1,339 @@
+= TestRIG setup for Fife and Drum
+(c) 2025 Rishiyur S. Nikhil
+:revnumber: 2025-07-31.A
+// :revdate: v0.1
+:sectnums:
+:THIS_FILE: TestRIG_Setup
+:imagesdir: Figs
+:toc:
+:toclevels: 3
+:toc-title: Contents
+:keywords: TestRIG, Bluespec, B-Lang, BSV, RISC-V, Fife, Drum
+
+// ****************************************************************
+
+This document describes how Fife and Drum are set up as a DUT in
+U.Cambridge's "TestRIG" system.
+
+Directories:
+
+    ~/Git/DEVEL_Learn_Bluespec_and_RISCV_Design/Code/Doc/
+    ~/Git/DEVEL_Learn_Bluespec_and_RISCV_Design/TestRIG/
+    ~/Git/TestRIG/
+
+// ****************************************************************
+== Background on TestRIG
+
+TestRIG is a system for automated randomized testing of RISC-V
+implementations, and is described in the following paper:
+
+====
+Joannou, A., Rugg, P., Woodruff, J., Fuchs, F.A., van der Maas, M.,
+Naylor, M., Roe, M., Watson,R.N.M, Neumann, P.G. and Moore, S.W.,
+_Randomized testing of RISC-V CPUs using direct instruction injection_,
+IEEE Design & Test 41:1, February 2024, pp.40-49,
+DOI 10.1109/MDAT.2023.3262741
+====
+
+The following diagram (from the TestRIG GitHub repository's README)
+shows the overall structure of a TestRIG system:
+
+image::TestRIG_Setup.png[align="center", width=600]
+
+VEngine generates and sends random instruction sequences for two
+RISC-V implementations A and B. Each implementation uses "Direct
+Instruction Injection" (DII) to inject instructions into the CPU as if
+they were fetched instructions.  For each DII instruction, each
+implementation sends back an "RVFI" packet to VEngine describing the
+effects of that instruction.  VEngine compares the RVFIs from A and B;
+any discrepancy is an indication of incompatibility between A and B.
+
+Typically, A is a "reference model" (e.g., the Sail RISC-V Formal
+Specification) and B is a DUT (Design Under Test).  Then, any
+discrepancy is an indication of a bug in the DUT.
+
+The VEngine uses Haskell QuickCheck to generate the instruction
+sequences. When a discrepancy is found, QuickCheck also automatically
+and repeatedly "shrinks" the culprit instruction sequence and replays
+it, trying to find the shortest sequence that still exhibits the
+inconsistency, so that debugging the DUT becomes easier.
+
+TestRIG contains QuickCheck generators for random RISC-V sequences,
+which can be constrained to specific RISC-V ISA options (RV32I, RV64I,
+M, A, F, D, C, ...).  TestRIG can also just replay a stored
+instruction trace.
+
+The GitHub TestRIG repository is: https://github.com/CTSRD-CHERI/TestRIG
+
+The TestRIG repo contains facilities for building some DUTs:
+
+1. The official formal-spec for RISC-V, written in Sail
+2. The Spike RISC-V simulator
+3. The QEMU RISC-V simulator
+4. Various hardware implementations of RISC-V including Ibex (in
+    SystemVerilog), RVBS/Piccolo/Flute/Toooba (written in BSV),
+    etc.
+
+// ****************************************************************
+== Fife and Drum in TestRIG
+
+Here we provide TestRIG RISC-V Implementations for Fife and Drum.
+They can be plugged into TestRIG to compare:
+
+* *A:* official formal-spec for RISC-V written in Sail vs. *B:* Drum or Fife
+* *A:* Drum vs. *B:* Fife
+* *A:* Drum vs. *B:* some other implementation
+* ...
+
+This code uses BSV code from the following repo which provides the
+boilerplate BSV/C code for the socket-based "bridge" between DUT
+and VEngine: https://github.com/CTSRD-CHERI/BSV-RVFI-DII.git
+
+The TestRIG DUT setup for Fife and Drum is shown in this figure:
+
+image::RSN_2025-06-28.000.00_TestRIG_Fife.png[TestRIG for Drum or Fife, align="center", width=1000]
+
+// ----------------
+
+=== Notes
+
+* `mkCPU` can be either Fife or Drum (same `mkCPU_and_Mem` and Memory
+  Model).  The other sub-interfaces of `mkCPU` (not shown in the
+  figure) are tied off and not used in the TestRIG setup (interrupt
+  inputs, `set_TIME`, Debug Module connections).
+
+* `mkRVFI_Bridge_Scalar` provides a reset signal `new_rst` which is
+  used as the reset signal for `mkCPU_and_Mem`.  Between each test
+  run, VEngine and `mkRVFI_Bridge_Scalar` reset `mkCPU_and_Mem` back
+  to a known starting state for the next test
+
+* In https://github.com/CTSRD-CHERI/BSV-RVFI-DII.git, the file
+  `RVFI_DII_Types.bsv` defines two types `RVFI_DII_Mem_Start` and
+  `RVFI_DII_Mem_Size`.  The Memory Model is set up to service this
+  range of addresses (and trigger a memory access fault for accesses
+  outside this range).
+
+* The current Memory Model does not support misaligned accesses; if
+  this changes in the future, `runTestRIG.py` has a command-line
+  arguments to allow it to generate misaligned accesses.
+  
+* On reset, the PC in `mkCPU` is set to `RVFI_DII_Mem_Start`.
+
+* On reset, the RISC-V GPRs in `mkCPU` are all cleared to contain the value 0.
+
+* `mkRVFI_Bridge_Scalar` is built to listen on TCP socket port 30000.
+  When TestRIG is run (see section "Run TestRIG" below), we provide
+  this as a command-line argument.
+
+// ================
+
+=== Notes for CPUs with PC speculation
+
+For CPUs with PC speculation (e.g., Fife, with branch prediction),
+some instructions are discarded on mis-speculation and redirection.
+This affects the _instruction injection logic_ in `mkCPU_and_Mem`,
+since TestRIG expects an RVFI report for each DII instruction (it
+cannot discard DII instructions since the "A" comparable will execute
+all of them).
+
+There are several ways to handle this in the instruction injection
+logic:
+
+1. Lockstep injection: After injecting DII instruction I1, do not
+  inject the next DII instruction I2 until the CPU has yielded the
+  RVFI report for I1.  This way, the pipeline is empty behind I1, and
+  no instruction is rejected, so the problem is finessed. +
+ +
+This is functionally correct, but will not exercise any pipeline
+  hazard logic in the CPU, leaving a gap in the verification.
+
+2. Maintain a FIFO buffer of some number of DII instructions (up to the
+  maximum number of instructions that may be discarded due to
+  mis-speculation), and replay the appropriate number of instructions
+  on mis-speculation.  The CPU needs to tell the instruction-injector
+  how much to rewind on a mis-speculation.
+
+3. In the CPU, generate and maintain a Dii_Id (architectural
+  instruction sequence number), and attach it to each IMem request.
+  This might be maintained in the Fetch Unit: increment on
+  each Fetch, and rewind appropriately on each redirection. +
+ +
+In the Instruction Injection logic, maintain a FIFO buffer of DII
+  instructions, and use this Dii_Id (with the IMem Request) to select
+  which instruction should be injected.  With A 2^n sized circular
+  buffer, this selection is a simple indexed buffer-read.
+
+Option 1 does not require any modification inside `mkCPU`; Options 2
+and 3 do.  For Fife we implement Option 1 first to get TestRIG
+running, and then refine it by implementing option 3.
+
+// ****************************************************************
+== Clone, Modify and Build TestRIG and the Sail RISC-V Formal Spec implementation
+
+Clone the repo
+link:https://github.com/CTSRD-CHERI/TestRIG[https://github.com/CTSRD-CHERI/TestRIG^]
+
+// ================================================================
+=== Modify TestRIG for Fife/Drum
+
+In our clone of the TestRIG repo, the file
+`utils/scripts/runTestRIG.py` needs some small modifications so it
+knows how to start up the TestRIG Fife or Drum executable as one of
+its comparables (A/B).
+
+* Add `'fifedrum'` to the list of known DUTs:
+
+```
+known_rvfi_dii = {'spike', 'rvbs', 'sail', 'piccolo', 'flute', 'toooba',
+                  'ibex', 'muntjac', 'qemu', 'manual', 'none', 'fifedrum'}
+```
+
+* Extend the command-line parser to allow for specyifing the file
+   path to the BSV simulation executable (Bluesim, Verilator sim,
+   ...):
+
+```
+parser.add_argument('--path-to-fifedrum', metavar='PATH', type=str,
+  default=op.join(implementations_path, "..../exe_Fife_for_TestRIG"),
+  help="The PATH to the Fife/Drum executable")
+```
+
+* Add a clause in the big if-then-else in the `def
+   spawn_rvfi_dii_server():` function to launch Fife/Drum
+
+```
+  elif name == 'fifedrum':
+    env2["RVFI_DII_PORT"] = str(port)
+    cmd = [args.path_to_fife]
+
+```
+
+// ================================================================
+=== Build TestRIG and the Sail RISC-V Formal Spec implementation
+
+There are many possible items that can be built in the TestRIG repo;
+we only need two such items.  Follow the instructions in the repo to
+build:
+
+* TestRIG's QCVEngine (QuickCheck Verification Engine)
+
+* The Sail RISC-V Formal Specification implementation (this will
+   act as our reference model)
+
+// ****************************************************************
+== Build the Fife/Drum TestRIG simulation executable
+
+```
+$ cd  <our clone of Fife/Drum repo>
+$ cd  Code/vendor/
+$ make all
+```
+
+to copy-in in the `RVFI_DII_Types` dependency from GitHub (see
+vendor/RVFI_DII_Types.vendor.hjson` for details on what gets copied
+in).  Then,
+
+```
+$ cd  <our clone of Fife/Drum repo>
+$ cd  TestRIG/vendor
+$ make all
+```
+
+to copy-in in the `BSV_RVFI_DII` and `SocketPacketUtils` dependencies
+from GitHub (see `vendor/BSV-RVFI-DII.vendor.hjson` and
+`vendor/SocketPacketUtils.vendor.hjson` for details on what gets
+copied in).  Finally:
+
+```
+$ cd  <our clone of Fife/Drum repo>
+$ cd  TestRIG/Build/Fife/
+$ make b_compile b_link    (or v_compile v_link)
+```
+
+This will make `exe_Fife_RV32_bsim`.
+
+(Or: `$ make v_compile v_sim` to make `exe_Fife_RV32_verilator`)
+
+(And, similarly in `TestRIG/Build/Drum` for a TestRIG-Drum simulation executable.)
+
+// ****************************************************************
+== Run TestRIG with Fife/Drum
+
+Here's how we run TestRIG on Fife (similar for Drum).  First we start
+up Fife/Drum with its `mkTop_for_TestRIG` wrapper, in one terminal
+window:
+
+```
+$ cd  <our clone of Fife/Drum repo>
+$ exe_Fife_RV32_bsim
+```
+
+This will startup the Fife/Drum simulation executable. It will print a
+few banners, and then sit waiting, listening on a TCP socket for a
+connection from TestRIG.
+
+In another terminal window, we startup TestRIG:
+
+```
+$ cd  <our clone of https://github.com/CTSRD-CHERI/TestRIG>
+$ make -f TestFife.mk test
+```
+
+This performs:
+```
+./utils/scripts/runTestRIG.py \
+    --implementation-B manual \
+    --relaxed-comparison \
+    --path-to-fifedrum \
+      .../DEVEL_Learn_Bluespec_and_RISCV_Design/TestRIG/Build/Fife/exe_Fife_RV32_bsim \
+    --implementation-B-port 30000 \
+    --implementation-B-log  ./log_fifedrum.txt \
+    --architecture rv32iZicsr_Zifencei \
+    --verbosity 1 \
+    --number-of-tests 100 \
+    --test-len 100
+    --no-support-misaligned \
+```
+
+This will run TestRIG, using the Sail RISC-V Formal Specification
+implementation as the "A" comparable (default), and Fife as the "B"
+comparable.
+
+`--implementation-B manual` says we will start up the Fife/Drum
+simulation executable manually (where it sits waiting, listening on
+the TCP socket), before running TestRIG. Otherwise, TestRIG would try
+to start up the implementation itself, using a default path specified
+in `runTestRIG.py`
+
+`--path-to-fifedrum ...` allows us to specify the exact file-path to
+our simulation executable.  We prefer this rather than having TestRIG
+using a default path specified in `runTestRIG.py`, because we
+typically build multiple variants: Fife, Drum (with FSM and Rules
+variants), Bluesim, Verilator sim, other Verilog sim, etc.
+
+`--implementation-B-port 30000` specifies the TCP socket on which the
+DUT listens.
+
+`--implementation-B-log ...` allows us to capture `stdout`
+(`$display()` outputs) from the Fife/Drum executable in the specified
+logfile.
+
+Run `runTestRIG.py --help` for information on more available options, such as:
+
+* Specifying alternative TCP hosts for the Fife/Drum executable
+
+* Specifying the categories of the RISC-V ISA to be tested, using
+  options such as `--test-include-regex regex` `--test-exclude-regex
+  regex`.  The supplied regular expression (regex) is used to match
+  categories such as "arith"/"arith64", "mem"/"mem64", "control",
+  "muldiv", "muldiv64", "atomic"/"atomic64", "float"/"double", "csr",
+  and many more. The full list of categories can be found in the
+  Haskell code for QCVEngine, in function `commandOpts()` of file: +
+  `$(TESTRIG_REPO)vengines/QuickCheckVEngine/src/QuickCheckVEngine/Main.hs`
+
+* Using other comparables (Spike, QEMU, ...) instead of the Sail RISC-V Formal Spec
+
+
+NOTE: We hope to expand this section as we gain more experience with
+      TestRIG, hopefully including examples of bug finding and bug
+      fixing.  Also, TestRIG itself is likely to evolve.

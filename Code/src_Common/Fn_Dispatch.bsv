@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_Dispatch;
 
@@ -53,25 +52,28 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 	 else if (x.opclass == OPCLASS_FENCE)   exec_tag = EXEC_TAG_DMEM;
       end
 
-      let to_Retire = RR_to_Retire {exec_tag:     exec_tag,
+      let to_Retire = RR_to_Retire {exec_tag:      exec_tag,
 
-				    pc:           x.pc,
-				    has_rd:       x.has_rd,
-				    writes_mem:   x.writes_mem,
+				    pc:            x.pc,
+                                                                    // \belide{36}
+				    predicted_pc:  x.predicted_pc,
+				    epoch:         x.epoch,
+				    halt_sentinel: False,           // \eelide
 
 				    exception:    x.exception,
 				    cause:        x.cause,
 				    tval:         x.tval,
 
-				    instr:        x.instr,
 				    fallthru_pc:  x.fallthru_pc,
+				    instr:        x.instr,
 				    rs1_val:      rs1_val,
+				    has_rd:       x.has_rd,
+				    writes_mem:   x.writes_mem,
                                                                     // \belide{36}
-				    predicted_pc: x.predicted_pc,
-				    epoch:        x.epoch,
-				    inum:         x.inum,
-				    // Debugger support
-				    halt_sentinel:False };          // \eelide
+				    xtra: RR_to_Retire_Xtra {
+				       inum:    x.xtra.inum,
+				       rs2_val: rs2_val}            // \eelide
+				    };
 
       // ----------------
       // Info for EX_Control
@@ -81,17 +83,22 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 					    rs1_val:      rs1_val,
 					    rs2_val:      rs2_val,
 					    imm:          x.imm,
-					    inum:         x.inum};    // \belide{44}
-                                                                      // \eelide
+                                                                           // \belide{44}
+					    xtra: RR_to_EX_Control_Xtra {
+					       inum: x.xtra.inum}          // \eelide
+					    };                           
       // ----------------
       // Info for Execute Int pipe
-      let to_EX  = RR_to_EX {pc:      x.pc,
-			     instr:   x.instr,
+      let to_EX  = RR_to_EX {instr:   x.instr,
 			     rs1_val: rs1_val,
 			     rs2_val: rs2_val,
 			     imm:     x.imm,
-			     inum:    x.inum};                       // \belide{29}
-                                                                     // \eelide
+                                                                     // \belide{29}
+			     xtra: RR_to_EX_Xtra {
+				inum:    x.xtra.inum,
+				pc:      x.pc}                       // \eelide
+			     };
+
       // ----------------
       // Info for Execute DMem pipe
       Bit #(XLEN)  eaddr    = rs1_val + x.imm;
@@ -100,18 +107,19 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 			       : (is_STORE (x.instr) ? funct5_STORE
 				  : (is_FENCE (x.instr) ? funct5_FENCE
 				     : (is_FENCE_I (x.instr) ? funct5_FENCE_I
-					: funct5_BOGUS))));
+					: funct5_INVAL))));
 
       let to_EX_DMem = Mem_Req {req_type: mrq_type,
 				size:     mrq_size,
 				addr:     zeroExtend (eaddr),
 				data:     zeroExtend (rs2_val),
-                                                                     // \belide{32}
 				epoch:    x.epoch,
-				// Debugging
-				inum:     x.inum,
-				pc:       x.pc,
-				instr:    x.instr};                 // \eelide
+                                                                     // \belide{32}
+				xtra: Mem_Req_Xtra {
+				   inum:     x.xtra.inum,
+				   pc:       x.pc,
+				   instr:    x.instr}                 // \eelide
+				};
 
       // ----------------
       // Construct and return final result
@@ -130,7 +138,7 @@ function Action log_Dispatch_Direct (File flog, RR_to_Retire x);
    action
       wr_log (flog, $format ("CPU.Dispatch_Direct:"));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_Retire (x)));
-      ftrace (flog, x.inum, x.pc, x.instr, "RR.dir", $format (""));
+      ftrace (flog, x.xtra.inum, x.pc, x.instr, "RR.dir", $format (""));
    endaction
 endfunction
 
@@ -139,7 +147,7 @@ function Action log_Dispatch_Control (File flog, RR_to_Retire x, RR_to_EX_Contro
       wr_log (flog, $format ("CPU.Dispatch_Control:"));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_Retire (x)));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_EX_Control (y)));
-      ftrace (flog, x.inum, x.pc, x.instr, "RR.C", $format (""));
+      ftrace (flog, x.xtra.inum, x.pc, x.instr, "RR.C", $format (""));
    endaction
 endfunction
 
@@ -148,7 +156,7 @@ function Action log_Dispatch_Int (File flog, RR_to_Retire x, RR_to_EX y);
       wr_log (flog, $format ("CPU.Dispatch_Int:"));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_Retire (x)));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_EX (y)));
-      ftrace (flog, x.inum, x.pc, x.instr, "RR.I", $format (""));
+      ftrace (flog, x.xtra.inum, x.pc, x.instr, "RR.I", $format (""));
    endaction
 endfunction
 
@@ -159,7 +167,7 @@ function Action log_Dispatch_DMem (File flog, RR_to_Retire x, RR_to_EX y, Mem_Re
       wr_log_cont (flog, $format ("        rs1_val:%08h  rs2_val:%08h  imm:%08h",
 				  y.rs1_val, y.rs2_val, y.imm));
       wr_log_cont (flog, $format ("    ", fshow_Mem_Req (mem_req)));
-      ftrace (flog, x.inum, x.pc, x.instr, "RR.D", $format (""));
+      ftrace (flog, x.xtra.inum, x.pc, x.instr, "RR.D", $format (""));
    endaction
 endfunction
 

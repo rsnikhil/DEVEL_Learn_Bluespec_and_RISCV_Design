@@ -1,5 +1,4 @@
-// Copyright (c) 2024 Rishiyur S. Nikhil and Bluespec, Inc. All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2024 Rishiyur S. Nikhil. All Rights Reserved.
 
 package Dbg_Stub;
 

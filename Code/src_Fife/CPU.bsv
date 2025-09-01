@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package CPU;
 
@@ -36,14 +35,17 @@ import CPU_IFC     :: *;
 
 import S1_Fetch      :: *;
 import S2_Decode     :: *;
-import S3_RR_RW      :: *;
+
+// import S3_RR_RW      :: *;    // Without bypassing
+import S3_RR_WB_b    :: *;       // With bypassing
+
 import S4_EX_Control :: *;
 import S4_EX_Int     :: *;
 import S5_Retire     :: *;
 
 // ****************************************************************
 
-String cpu_name = "Fife v0.85 2024-09-08";
+String cpu_name = "Fife v0.90 2025-07-12";
 
 // ****************************************************************
                                                                     // \blatex{Fife_mkCPU}
@@ -142,6 +144,11 @@ module mkCPU (CPU_IFC);
 
    method Action set_MIP_MTIP (Bit #(1) v) = stage_Retire.set_MIP_MTIP (v);
 
+   // ----------------------------------------------------------------
+   // Output stream of RVFI reports (to verifier/logger)
+   interface fo_rvfi_reports = stage_Retire.fo_rvfi_reports;
+
+   // ----------------------------------------------------------------
    // Debugger support
    // Requests from/responses to remote debugger
    interface fi_dbg_to_CPU_pkt   = to_FIFOF_I (f_dbg_to_CPU_pkt);

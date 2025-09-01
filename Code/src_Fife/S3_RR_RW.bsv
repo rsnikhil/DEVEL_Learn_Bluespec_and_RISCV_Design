@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package S3_RR_RW;
 
@@ -79,18 +78,20 @@ module mkRR_RW (RR_RW_IFC);
 
    // General-Purpose Registers (GPRs)
    GPRs_IFC #(XLEN)  gprs <- mkGPRs_synth;
+   // Logging reg access, for debugging, formal verification, etc.
+   GPR_Logging_IFC #(XLEN) gpr_logging <- mkGPR_Logging_synth;
 
    // Scoreboard for GPRs
    Reg #(Scoreboard) rg_scoreboard <- mkReg (replicate (0));    // \elatex{Fife_mkRR_RW1}
 
-   Reg #(Bit #(8)) rg_stall_count <- mkReg (0);
+   Reg #(Bit #(16)) rg_stall_count <- mkReg (0);
                                                                 // \blatex{Fife_mkRR_RW2}
    // ================================================================
    // BEHAVIOR: Forward
 
    rule rl_RR_Dispatch ((! f_RW_from_Retire.notEmpty)
 			&& (! f_Decode_to_RR.first.halt_sentinel));
-      if (rg_stall_count == 'hFF) begin                                    // \belide{6}
+      if (rg_stall_count == 'hFFFF) begin                                  // \belide{6}
 	 wr_log2 (rg_flog, $format ("CPU.rl_RR_Dispatch: reached %0d stalls; quitting",
 				    rg_stall_count));
 	 $finish (1);
@@ -111,12 +112,12 @@ module mkRR_RW (RR_RW_IFC);
 
       if (stall) begin
 	 // No action
-	 rg_stall_count <= rg_stall_count + 1;                             // \belide{9}
+	 rg_stall_count <= rg_stall_count + 1;                                  // \belide{9}
 
 	 wr_log (rg_flog, $format ("CPU.rl_RR.stall: busy rd:%0d rs1:%0d rs2:%0d",
 				   busy_rd, busy_rs1, busy_rs2));
 	 wr_log_cont (rg_flog, $format ("    ", fshow_Decode_to_RR (x)));
-	 ftrace (rg_flog, x.inum, x.pc, x.instr, "RR.S", $format (""));    // \eelide
+	 ftrace (rg_flog, x.xtra.inum, x.pc, x.instr, "RR.S", $format (""));    // \eelide
       end
       else begin
 	 rg_stall_count <= 0;                                              // \belide{9}
@@ -127,7 +128,12 @@ module mkRR_RW (RR_RW_IFC);
 	 // Ok even if instr does not have rs1 or rs2
 	 // values used only if relevant.
 	 let rs1_val = gprs.read_rs1 (rs1);
+	 if (x.has_rs1)
+	    gpr_logging.log_rs1_read (x.xtra.inum, rs1, rs1_val);
+
 	 let rs2_val = gprs.read_rs2 (rs2);
+	 if (x.has_rs2)
+	    gpr_logging.log_rs2_read (x.xtra.inum, rs2, rs2_val);
 
 	 // Dispatch to one of the next-stage pipes
 	 Result_Dispatch y <- fn_Dispatch (x, rs1_val, rs2_val, rg_flog);
@@ -189,19 +195,22 @@ module mkRR_RW (RR_RW_IFC);
       scoreboard [x.rd] = 0;
       rg_scoreboard <= scoreboard;
 
-      if (x.commit)
+      if (x.commit) begin
 	 gprs.write_rd (x.rd, x.data);
-                                                                            // \belide{6}
+	 gpr_logging.log_rd_write (x.xtra.inum, x.rd);
+      end
+                                                                                  // \belide{6}
       // ---------------- DEBUG
       wr_log (rg_flog, $format ("CPU.RW:"));
       wr_log (rg_flog, fshow_RW_from_Retire (x));
-      ftrace (rg_flog, x.inum, x.pc, x.instr, "RW", $format (""));          // \eelide
+      ftrace (rg_flog, x.xtra.inum, x.xtra.pc, x.xtra.instr, "RW", $format ("")); // \eelide
    endrule                                                      // \elatex{Fife_mkRR_RW3}
                                                                 // \blatex{Fife_mkRR_RW4}
    // ================================================================
    // INTERFACE
 
    method Action init (Initial_Params initial_params);
+      $display ("GPRs: simple, non-bypassed");
       rg_flog <= initial_params.flog;
    endmethod
 

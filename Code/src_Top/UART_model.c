@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc. All Rights Reserved
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil. All Rights Reserved
 // Some fragments taken from earlier version of Cissr, 2013-2022 
 
 // ****************************************************************

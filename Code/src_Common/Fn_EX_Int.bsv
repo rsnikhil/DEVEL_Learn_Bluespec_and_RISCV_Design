@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_EX_Int;
 
@@ -39,9 +38,12 @@ function ActionValue #(EX_to_Retire)                                // \blatex{f
 			    cause:      ?,
 			    tval:       ?,
 			    data:       ?,
-			    inum:       x.inum,                     // \belide{28}
-			    pc:         x.pc,
-			    instr:      instr};                     // \eelide
+                                                                       // \belide{28}
+			    xtra: EX_to_Retire_Xtra {
+			       inum:   x.xtra.inum,
+			       pc:     x.xtra.pc,
+			       instr:  instr}                          // \eelide
+			    };
 
       if (is_LUI (instr)) begin
 	 y.data = x.imm;
@@ -50,7 +52,7 @@ function ActionValue #(EX_to_Retire)                                // \blatex{f
 				     instr_rd (instr), y.data));       // \eelide
       end
       else if (is_AUIPC (instr)) begin
-	 y.data = x.pc + x.imm;
+	 y.data = x.xtra.pc + x.imm;
                                                                        // \belide{9}
 	 wr_log_cont (logf, $format ("fn_EX_IALU: AUIPC x%0d <= %0h",
 				     instr_rd (instr), y.data));       // \eelide
@@ -76,7 +78,7 @@ function Action log_EX_Int (File flog, RR_to_EX x, EX_to_Retire y);
       wr_log (flog, $format ("CPU.EX_Int"));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_EX (x)));
       wr_log_cont (flog, $format ("    ", fshow_EX_to_Retire (y)));
-      ftrace (flog, x.inum, x.pc, x.instr, "EX.I", $format (""));
+      ftrace (flog, x.xtra.inum, x.xtra.pc, x.instr, "EX.I", $format (""));
    endaction
 endfunction
 

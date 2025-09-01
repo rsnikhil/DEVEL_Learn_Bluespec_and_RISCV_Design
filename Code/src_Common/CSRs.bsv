@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package CSRs;
 
@@ -34,6 +33,25 @@ function Bit #(XLEN) fn_legalize_mstatus (Bit #(XLEN) x);
    return y;
 endfunction
 
+function Bit #(XLEN) fn_legalize_mtvec (Bit #(XLEN) v_old, Bit #(XLEN) v_new);
+   // mtvec [1:0] is WARL 'Mode': 2'b00: direct, 2'b01:vectored
+   // 2'b10 and 2'b11 are reserved
+   Bit #(2) mode_old = v_old [1:0];
+   Bit #(2) mode_new = v_new [1:0];
+   Bit #(2) mode     = ((mode_new [1] == 1'b1) ? mode_old : mode_new);
+   return { v_new [xlen-1:2], mode };
+endfunction
+
+function Bit #(XLEN) fn_legalize_mie (Bit #(XLEN) x);
+   Bit #(XLEN) mask = zeroExtend (16'b_0010101010101010);
+   return (x & mask);
+endfunction
+
+function Bit #(XLEN) fn_legalize_mepc (Bit #(XLEN) x);
+   Bit #(XLEN) mask = (~ 'h3);    // zero out two LSBs
+   return (x & mask);
+endfunction
+
 // ****************************************************************
 
 interface CSRs_IFC;                                                // \blatex{CSRs_IFC}
@@ -56,7 +74,9 @@ interface CSRs_IFC;                                                // \blatex{CS
    // Returns PC from MEPC
    method ActionValue #(Bit #(XLEN)) mav_xRET ();
 
+   // INSTRET access
    method Action ma_incr_instret;
+   method Bit #(64) mv_instret;
 
    // Set TIME
    (* always_ready, always_enabled *)
@@ -92,7 +112,7 @@ module mkCSRs (CSRs_IFC);
    let misa_mxl = (one << (xlen - 2));
    let misa     = (misa_mxl | misa_I);
 
-   Reg #(Bit #(XLEN)) csr_mstatus  <- mkReg (fn_legalize_mstatus (0));
+   Reg #(Bit #(XLEN)) csr_mstatus  <- mkReg (0);    // TODO: fn_legalize_mstatus (0)); ?
    Reg #(Bit #(XLEN)) csr_mie      <- mkReg (0);
    Reg #(Bit #(XLEN)) csr_mtvec    <- mkReg (0);                // \blatex{Reg_csr_xxx}
    Reg #(Bit #(XLEN)) csr_mscratch <- mkReg (0);
@@ -147,12 +167,13 @@ module mkCSRs (CSRs_IFC);
 	    csr_addr_MHARTID:   noAction;    // read-only
 
 	    csr_addr_MSTATUS:   csr_mstatus  <= fn_legalize_mstatus (csr_val);
-	    csr_addr_MIE:       csr_mie      <= csr_val;
+	    csr_addr_MSTATUSH:  noAction;
+	    csr_addr_MIE:       csr_mie      <= fn_legalize_mie (csr_val);
 	    csr_addr_MIP:       noAction;    // read-only
                                                                              // \eelide
-	    csr_addr_MTVEC:     csr_mtvec    <= csr_val;
+	    csr_addr_MTVEC:     csr_mtvec    <= fn_legalize_mtvec (csr_mtvec, csr_val);
 	    csr_addr_MSCRATCH:  csr_mscratch <= csr_val;
-	    csr_addr_MEPC:      csr_mepc     <= csr_val;
+	    csr_addr_MEPC:      csr_mepc     <= fn_legalize_mepc (csr_val);
 	    csr_addr_MCAUSE:    csr_mcause   <= csr_val;
 	    csr_addr_MTVAL:     csr_mtval    <= csr_val;
 
@@ -206,6 +227,7 @@ module mkCSRs (CSRs_IFC);
 	    csr_addr_MHARTID:   y = 0;
 
 	    csr_addr_MSTATUS:   y = csr_mstatus;
+	    csr_addr_MSTATUSH:  y = 0;
 	    csr_addr_MIE:       y = csr_mie;
 	    csr_addr_MIP:       y = zeroExtend ({csr_mip_mtip, 7'b0});
                                                                          // \eelide
@@ -414,8 +436,13 @@ module mkCSRs (CSRs_IFC);
    // xRET actions
    method mav_xRET = fav_xRET;
 
+   // INSTRET access
    method Action ma_incr_instret;
       csr_minstret <= csr_minstret + 1;
+   endmethod
+
+   method Bit #(64) mv_instret;
+      return csr_minstret;
    endmethod
 
    // Set TIME

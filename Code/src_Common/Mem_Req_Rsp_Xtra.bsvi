@@ -1,0 +1,34 @@
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
+
+// ****************************************************************
+// WARNING: this is not a standalone BSV package, but a file to be
+// 'included' into another BSV file by the preprocessor.
+
+// This contains extra fields in memory request/response structs
+// that are only meant for debugging and verification.
+
+// In a production build each field here can be replaced with a
+// Bit#(0) definition so it takes no space (wires or register state).
+
+// ****************************************************************
+// Memory requests
+
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;
+   Bit #(32)    instr;
+} Mem_Req_Xtra
+deriving (Bits, FShow);
+
+// ****************************************************************
+// Memory responses
+
+typedef struct {
+   // Copied from mem_req, for debugging only
+   Bit #(64)     inum;
+   Bit #(XLEN)   pc;
+   Bit #(32)     instr;
+} Mem_Rsp_Xtra
+deriving (Bits, FShow);
+
+// ****************************************************************

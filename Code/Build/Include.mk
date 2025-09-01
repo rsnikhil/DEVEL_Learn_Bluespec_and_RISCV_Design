@@ -42,7 +42,8 @@ SRC_COMMON = $(REPO)/src_Common
 TOPFILE   ?= $(SRC_TOP)/Top.bsv
 TOPMODULE ?= mkTop
 
-MISC_LIBS = $(REPO)/vendor/bsc-contrib_Misc
+MISC_LIBS     = $(REPO)/vendor/bsc-contrib_Misc
+RVFI_DII_LIBS = $(REPO)/vendor/RVFI_DII_Types
 
 BSCFLAGS = -D $(RV) \
 	-use-dpi \
@@ -69,7 +70,7 @@ endif
 # ----------------
 # bsc's directory search path
 
-BSCPATH = $(SRC_TOP):$(SRC_CPU):$(SRC_COMMON):$(MISC_LIBS):+
+BSCPATH = $(SRC_TOP):$(SRC_CPU):$(SRC_COMMON):$(MISC_LIBS):$(RVFI_DII_LIBS):+
 
 # ****************************************************************
 # FOR VERILATOR

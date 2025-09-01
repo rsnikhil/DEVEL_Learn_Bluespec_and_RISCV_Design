@@ -1,21 +1,20 @@
-// Copyright (c) 2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Store_Buffer;
 
 // ****************************************************************
 // This package implements a store-buffer (a searchable queue).
 //   MMIO and misaligned requests immediately return DEFERRED response.
-//   Store requests from CPU are enqueued; response to CPU is immediate
+//   STORE requests from CPU are enqueued; response to CPU is immediate
 //   Commit/discard requests discard the head of the queue
 //                and if 'commit', then also writes to memory
-//   Load requests use memory-read as baseline, then update from
+//   LOAD requests use memory-read as baseline, then update from
 //                store-buffer if any matches.
+//   Since this is in DMem, we do not expect FETCH requests.
 
 // Each STORE must be buffered separately even if they have
 // overlapping addresses because their commits/discards may be
 // different.
-
 
 // TODO: Add AMOs.  Subtlety: suppose we did speculative partial-word
 //       STOREs (so, several store-buffer entries),
@@ -47,7 +46,7 @@ import Semi_FIFOF :: *;
 import Utils       :: *;
 import Instr_Bits  :: *;    // for funct5_LOAD/STORE ..
 import Mem_Req_Rsp :: *;
-import Inter_Stage :: *;    // for Retire_to_DMem_Commit
+import Inter_Stage :: *;    // for Epoch
 
 // ****************************************************************
 // Debugging support
@@ -200,9 +199,11 @@ module mkStore_Buffer #(FIFOF_O #(Mem_Req)               fo_req_from_CPU,
 					 req_type: cur_CPU_req.req_type,
 					 size:     cur_CPU_req.size,
 					 addr:     cur_CPU_req.addr,
-					 inum:     cur_CPU_req.inum,
-					 pc:       cur_CPU_req.pc,
-					 instr:    cur_CPU_req.instr};
+					 xtra: Mem_Rsp_Xtra {
+					    inum:  cur_CPU_req.xtra.inum,
+					    pc:    cur_CPU_req.xtra.pc,
+					    instr: cur_CPU_req.xtra.instr}
+					 };
 
    // Net update and mask in store-buffer for given addr
    match { .upd_data, .upd_mask } = fn_collect_updates (cur_CPU_req.addr,

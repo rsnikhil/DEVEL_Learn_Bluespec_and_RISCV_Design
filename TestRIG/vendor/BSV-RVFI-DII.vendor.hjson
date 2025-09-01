@@ -1,0 +1,28 @@
+{
+  // Name of the vendored-in project
+  name: "BSV-RVFI-DII",
+
+  // Target directory: typically equal to the name
+  // All imported code is copied into this directory
+  target_dir: "BSV-RVFI-DII",
+
+  // Git upstream source code repository
+  upstream: {
+    // Upstream Git repository URL. HTTPS URLs are preferred.
+    url: "https://github.com/CTSRD-CHERI/BSV-RVFI-DII.git",
+    // Upstream revision or branch. Can be a commit hash or a branch name.
+    rev: "master",
+  },
+
+  // Optional: Pick specific files or subdirectories from upstream and
+  // specify where to put them.
+  mapping: [
+    {from: 'LICENSE',              to: 'LICENSE'},
+    {from: 'Makefile',             to: 'Makefile'},
+    {from: 'RVFI_DII_Bridge.bsv',  to: 'RVFI_DII_Bridge.bsv'},
+    {from: 'RVFI_DII_Test.bsv',    to: 'RVFI_DII_Test.bsv'},
+    {from: 'RVFI_DII_Types.bsv',   to: 'RVFI_DII_Types.bsv'},
+    {from: 'RVFI_DII.bsv',         to: 'RVFI_DII.bsv'},
+    {from: 'Socket.bsv',           to: 'Socket.bsv'},
+  ]
+}

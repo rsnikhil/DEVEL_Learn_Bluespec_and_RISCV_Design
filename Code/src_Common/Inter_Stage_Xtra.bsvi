@@ -1,0 +1,104 @@
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
+
+// ****************************************************************
+// WARNING: this is not a standalone BSV package, but a file to be
+// 'included' into another BSV file by the preprocessor.
+
+// This contains extra fields in inter-stage structs that are only
+// meant for debugging and verification.
+
+// In a production build each field here can be replaced with a
+// Bit#(0) definition so it takes no space (wires or register state).
+
+// ****************************************************************
+// Pipeline forward flow
+
+// ================================================================
+// Fetch => Decode
+
+typedef struct {
+   Bit #(64)  inum;
+} Fetch_to_Decode_Xtra
+deriving (Bits, FShow);
+
+// ================================================================
+// Decode => Register Read
+
+typedef struct {
+   Bit #(64)  inum;
+} Decode_to_RR_Xtra
+deriving (Bits, FShow);
+
+// ================================================================
+// Register Read => Retire Direct
+
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  rs2_val;
+} RR_to_Retire_Xtra
+deriving (Bits, FShow);
+
+// ================================================================
+// Register Read => EX_Control => Retire
+
+// ---------------- Register Read => EX_Control (BR/JAL/JALR)
+
+typedef struct {
+   Bit #(64)  inum;
+} RR_to_EX_Control_Xtra
+deriving (Bits, FShow);
+
+// ---------------- EX_Control => Retire
+
+// Extra fields only for debug/verification
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;                
+   Bit #(32)    instr;
+} EX_Control_to_Retire_Xtra
+deriving (Bits, FShow);
+
+// ================================================================
+// Register Read => Various Execute pipes (Int, IMUL, FALU, DMem, ...) => Retire
+
+// ---------------- Register Read => EX
+
+// Extra fields only for debug/verification
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;     
+} RR_to_EX_Xtra
+deriving (Bits, FShow);
+
+// ---------------- EX => Retire
+
+// Extra fields only for debug/verification
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;
+   Bit #(32)    instr;     
+} EX_to_Retire_Xtra
+deriving (Bits, FShow);
+
+// ****************************************************************
+// Pipeline backward flows
+
+// ---------------- Fetch <= Retire (redirect)
+
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;
+   Bit #(32)    instr;
+} Fetch_from_Retire_Xtra
+deriving (Bits, FShow);
+
+// ---------------- Register Write <= Retire (writeback)
+
+typedef struct {
+   Bit #(64)    inum;
+   Bit #(XLEN)  pc;
+   Bit #(32)    instr;
+} RW_from_Retire_Xtra
+deriving (Bits, FShow);
+
+// ****************************************************************

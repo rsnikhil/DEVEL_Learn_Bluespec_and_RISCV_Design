@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Mems_Devices;
 
@@ -174,7 +173,7 @@ module mkMems_Devices #(FIFOF_O #(Mem_Req) fo_IMem_req,
 	 end
 	 else begin
 	    Bit #(128) wdata   = zeroExtend (mem_req.data);
-	    Bit #(96)  result <- c_mems_devices_req_rsp (mem_req.inum,
+	    Bit #(96)  result <- c_mems_devices_req_rsp (mem_req.xtra.inum,
 							 zeroExtend (pack (mem_req.req_type)),
 							 zeroExtend (pack (mem_req.size)),
 							 mem_req.addr,
@@ -182,25 +181,17 @@ module mkMems_Devices #(FIFOF_O #(Mem_Req) fo_IMem_req,
 							 wdata);
 	    mem_rsp_type = unpack (truncate (result [31:0]));
 	    rdata        = result [95:32];
-	    /*
-	    Mem_Rsp mem_rsp = Mem_Rsp {inum:     mem_req.inum,
-				       pc:       mem_req.pc,
-				       instr:    mem_req.instr,
-				       req_type: mem_req.req_type,
-				       size:     mem_req.size,
-				       addr:     mem_req.addr,
-				       rsp_type: unpack (truncate (result [31:0])),
-				       data:     result [95:32]};
-	    */
 	 end
-	 Mem_Rsp mem_rsp = Mem_Rsp {inum:     mem_req.inum,
-				    pc:       mem_req.pc,
-				    instr:    mem_req.instr,
-				    req_type: mem_req.req_type,
+	 Mem_Rsp mem_rsp = Mem_Rsp {req_type: mem_req.req_type,
 				    size:     mem_req.size,
 				    addr:     mem_req.addr,
 				    rsp_type: mem_rsp_type,
-				    data:     rdata};
+				    data:     rdata,
+				    xtra: Mem_Rsp_Xtra {
+				       inum:  mem_req.xtra.inum,
+				       pc:    mem_req.xtra.pc,
+				       instr: mem_req.xtra.instr}
+				    };
 	 fi_mem_rsp.enq (mem_rsp);
 
 	 if (verbosity != 0) begin
@@ -252,7 +243,7 @@ module mkMems_Devices #(FIFOF_O #(Mem_Req) fo_IMem_req,
    method Action init (Initial_Params initial_params) if (! rg_running);
       rg_logfile <= initial_params.flog;
       spec_sto_buf.init (initial_params);
-      c_mems_devices_init (0);
+      c_mems_devices_init (initial_params.addr_base_mem, initial_params.size_B_mem);
       rg_MTIME    <= 0;
       rg_MTIMECMP <= '1;
       rg_running <= True;
@@ -272,7 +263,7 @@ endmodule
 // All devices are accessed just like memory (MMIO).
 
 import "BDPI"
-function Action c_mems_devices_init (Bit #(32) dummy);
+function Action c_mems_devices_init (Bit #(64) addr_base_mem, Bit #(64) size_B_mem);
 
 // result and wdata are passed as pointers.
 // result is passed as first arg to C function.

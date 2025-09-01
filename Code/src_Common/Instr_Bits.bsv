@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Instr_Bits;
 
@@ -221,13 +220,14 @@ Bit #(5) funct5_AMOMAX  = 5'b_10100;
 Bit #(5) funct5_AMOMINU = 5'b_11000;
 Bit #(5) funct5_AMOMAXU = 5'b_11100;
 
-// The following are pseudo funct5s for LOAD, STORE, FENCE, FENCE_I
+// The following are pseudo funct5s for FETCH, LOAD, STORE, FENCE, FENCE_I
 // used in Mem_Req (these funct5s are unused by AMO codings)
-Bit #(5) funct5_LOAD    = 5'b_11110;                // \blatex{funct5_MEMOPs}
+Bit #(5) funct5_FETCH   = 5'b_00110;                // \blatex{funct5_MEMOPs}
+Bit #(5) funct5_LOAD    = 5'b_11110;
 Bit #(5) funct5_STORE   = 5'b_11111;
 Bit #(5) funct5_FENCE   = 5'b_11101;
 Bit #(5) funct5_FENCE_I = 5'b_11001;                // \elatex{funct5_MEMOPs}
-Bit #(5) funct5_BOGUS   = 5'b_00101;
+Bit #(5) funct5_INVAL   = 5'b_00111;
 
 function Bool is_legal_AMO (Bit #(32) instr);
    let funct3 = instr_funct3 (instr);

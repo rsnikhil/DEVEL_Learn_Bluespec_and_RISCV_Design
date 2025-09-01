@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur Nikhil and Bluespec, Inc. All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur Nikhil. All Rights Reserved.
 
 package Utils;
 
@@ -43,7 +42,7 @@ function Action ftrace (File         flog,
 			Fmt          adhoc);
    action
       if (flog != InvalidFile)
-	 $fdisplay (flog, "Trace %0d %0d %0h %0h %s", cur_cycle,
+	 $fdisplay (flog, "Trace %0d %0d %08h %08h %s", cur_cycle,
 		    inum, pc, instr, label, adhoc);
    endaction
 endfunction

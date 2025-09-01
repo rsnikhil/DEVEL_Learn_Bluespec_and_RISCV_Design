@@ -10,9 +10,12 @@ build_*
 C_for_bsim
 Elf_to_Memhex32.exe
 README.html
-Doc/Build_and_Run_Guide.html
+Code/Doc/Build_and_Run_Guide.html
 Code/vendor/bsc-contrib_Misc
 Code/vendor/EDB
+Code/vendor/RVFI_DII_Types
+TestRIG/vendor/BSV-RVFI-DII
+TestRIG/vendor/SocketPacketUtils
 traces
 *.o
 *.pdf

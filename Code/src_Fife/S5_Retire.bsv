@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package S5_Retire;
 
@@ -27,6 +26,9 @@ import Mem_Req_Rsp :: *;
 
 import CSRs         :: *;
 import Retire_Utils :: *;
+
+import RVFI_DII_Types :: *;    // For 'RVFI_DII_Execution' struct
+import RVFI_Report    :: *;
 
 // ****************************************************************
                                                               // \blatex{Fife_Retire_IFC}
@@ -58,6 +60,11 @@ interface Retire_IFC;
    (* always_ready, always_enabled *)
    method Action set_MIP_MTIP (Bit #(1) v);
 
+   // ----------------------------------------------------------------
+   // Output stream of RVFI reports (to verifier/logger)
+   interface FIFOF_O #(RVFI_DII_Execution #(XLEN, 64)) fo_rvfi_reports;
+
+   // ----------------------------------------------------------------
    // Debugger control
    // For haltreq/resumereq, True result means OK, False means error
    method ActionValue #(Bool) haltreq;
@@ -143,6 +150,11 @@ module mkRetire (Retire_IFC);
    Bool ebreak_halt = (dcsr [index_dcsr_ebreakm] == 1'b1);
 
    // ****************************************************************
+   // RVFI reporting
+
+   RVFI_Report_IFC rvfi_report <- mkRVFI_Report;
+
+   // ****************************************************************
    // BEHAVIOR
 
    // ================================================================
@@ -170,10 +182,13 @@ module mkRetire (Retire_IFC);
 	       rg_epoch <= next_epoch;
 	       let y = Fetch_from_Retire {next_pc:    next_pc,
 					  next_epoch: next_epoch,
-					  haltreq:    haltreq,                  // \belide{39}
-					  inum:       x1.inum,
-					  pc:         x1.pc,
-					  instr:      x1.instr};                // \eelide
+					  haltreq:    haltreq,
+                                                                                // \belide{42}
+					  xtra: Fetch_from_Retire_Xtra {
+					     inum:  x1.xtra.inum,
+					     pc:    x1.pc,
+					     instr: x1.instr}                   // \eelide
+					  };
 	       f_Fetch_from_Retire.enq (y);
                                                                                 // \belide{12}
 	       // ---------------- DEBUG
@@ -194,11 +209,13 @@ module mkRetire (Retire_IFC);
 	    let y = RW_from_Retire {rd:         instr_rd (x1.instr),
 				    commit:     commit,
 				    data:       rd_val,
-				    inum:       x1.inum,                // \belide{36}
-				    pc:         x1.pc,
-				    instr:      x1.instr};              // \eelide
+				    xtra: RW_from_Retire_Xtra {           // \belide{36}
+				       inum:       x1.xtra.inum,
+				       pc:         x1.pc,
+				       instr:      x1.instr}              // \eelide
+				    };
 	    f_RW_from_Retire.enq (y);
-                                                                              // \belide{12}
+                                                                             // \belide{12}
 	    // ---------------- DEBUG
 	    Fmt fmt = $format ("    CPU.S5.fa_update_rd:");
 	    if (! commit)
@@ -216,8 +233,8 @@ module mkRetire (Retire_IFC);
       action
 	 if (x1.writes_mem && (mem_rsp.rsp_type == MEM_RSP_OK)) begin
 	    let y = Retire_to_DMem_Commit{commit: commit,
-					  inum: x1.inum};        // \belide{42}
-                                                                 // \eelide
+					  inum: x1.xtra.inum};    // \belide{42}
+                                                                  // \eelide
 	    f_DMem_S_commit.enq (y);
 	 end
       endaction
@@ -288,7 +305,7 @@ module mkRetire (Retire_IFC);
       end
                                                                             // \belide{6}
       // ---------------- DEBUG
-      ftrace (rg_flog, x_rr_to_retire.inum, x_rr_to_retire.pc, x_rr_to_retire.instr,
+      ftrace (rg_flog, x_rr_to_retire.xtra.inum, x_rr_to_retire.pc, x_rr_to_retire.instr,
 	      "RET.discard", $format (""));
       wr_log (rg_flog, $format ("CPU.S5.rl_Retire_wrong_path:\n    ",
 				+ fshow_RR_to_Retire (x_rr_to_retire)));    // \eelide
@@ -326,6 +343,7 @@ module mkRetire (Retire_IFC);
                                                                 //\blatex{Fife_rl_CSRRxx}
    rule rl_Retire_CSRRxx (retire_Direct
 			  && is_legal_CSRRxx (x_rr_to_retire.instr));
+      // Note: mav_csrrxx takes care of csrs.ma_incr_instret as well
       match { .exc, .rd_val } <- csrs.mav_csrrxx (x_rr_to_retire.instr,
 						  x_rr_to_retire.rs1_val);
       // Unreserve/commit rd if needed
@@ -340,6 +358,8 @@ module mkRetire (Retire_IFC);
 			    (rg_runstate == S5_HALTREQ),
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+	 rvfi_report.rvfi_CSRRxx (x_rr_to_retire, rd_val, csrs.mv_instret, epoch);
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -364,6 +384,9 @@ module mkRetire (Retire_IFC);
 			 x_rr_to_retire,
 			 new_pc);
       csrs.ma_incr_instret;
+
+      let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+      rvfi_report.rvfi_MRET (x_rr_to_retire, new_pc, csrs.mv_instret, epoch);
                                                                           // \belide{6}
       log_Retire_MRET (rg_flog, x_rr_to_retire);                          // \eelide
    endrule
@@ -443,6 +466,8 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x2.next_pc);
 	 csrs.ma_incr_instret;
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+	 rvfi_report.rvfi_Control (x_rr_to_retire, x2, csrs.mv_instret, epoch);
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -474,6 +499,8 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+	 rvfi_report.rvfi_Int (x_rr_to_retire, x2, csrs.mv_instret, epoch);
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -496,21 +523,24 @@ module mkRetire (Retire_IFC);
       Bool exception = (x2.rsp_type != MEM_RSP_OK);
 
       // Sign-extend data if necessary
-      let data = x2.data;
-      if (instr_opcode (x_rr_to_retire.instr) == opcode_LOAD) begin
-	 if (instr_funct3 (x_rr_to_retire.instr) == funct3_LB)
-	    data = signExtend (data [7:0]);
-	 else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LBU)
-	    data = zeroExtend (data [7:0]);
-	 else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LH)
-	    data = signExtend (data [15:0]);
-	 else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LHU)
-	    data = zeroExtend (data [15:0]);
-	 // TODO: LW in RV64
-      end
+      Bit #(XLEN) rd_val = 0;
+      if ((instr_opcode (x_rr_to_retire.instr) == opcode_LOAD)
+	  && (instr_rd (x_rr_to_retire.instr) != 0))
+	 begin
+	    rd_val = truncate (x2.data);
+	    if (instr_funct3 (x_rr_to_retire.instr) == funct3_LB)
+	       rd_val = signExtend (rd_val [7:0]);
+	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LBU)
+	       rd_val = zeroExtend (rd_val [7:0]);
+	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LH)
+	       rd_val = signExtend (rd_val [15:0]);
+	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LHU)
+	       rd_val = zeroExtend (rd_val [15:0]);
+	    // TODO: LW in RV64
+	 end
 
       // Unreserve/commit rd if needed
-      fa_update_rd (x_rr_to_retire, (! exception), truncate (data));
+      fa_update_rd (x_rr_to_retire, (! exception), rd_val);
 
       if (! exception) begin
 	 f_RR_to_Retire.deq;
@@ -526,6 +556,9 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
+
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+	 rvfi_report.rvfi_DMem (x_rr_to_retire, x2, rd_val, csrs.mv_instret, epoch);
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -551,13 +584,15 @@ module mkRetire (Retire_IFC);
       let x2 <- pop_o (to_FIFOF_O (f_DMem_S_rsp));
 
       // Issue DMem request
-      let mem_req = Mem_Req{inum:     x2.inum,
-			    pc:       x2.pc,
-			    instr:    x2.instr,
-			    req_type: x2.req_type,
-			    size:     x2.size,
-			    addr:     x2.addr,
-			    data:     x2.data};
+      let mem_req = Mem_Req {req_type: x2.req_type,
+			     size:     x2.size,
+			     addr:     x2.addr,
+			     data:     x2.data,
+			     xtra: Mem_Req_Xtra {                  // \belide{29}
+				inum:   x2.xtra.inum,
+				pc:     x2.xtra.pc,
+				instr:  x2.xtra.instr}             // \eelide
+			     };
       f_DMem_req.enq (mem_req);
       rg_mode <= MODE_DMEM_RSP;    // go to await response
                                                                    // \belide{6}
@@ -572,6 +607,7 @@ module mkRetire (Retire_IFC);
 
       Bool exception = ((x2.rsp_type == MEM_RSP_ERR)
 			|| (x2.rsp_type == MEM_RSP_MISALIGNED));
+
       if (exception) begin
 	 rg_epc   <= x_rr_to_retire.pc;
 	 rg_cause <= ((x2.rsp_type == MEM_RSP_MISALIGNED)
@@ -583,6 +619,9 @@ module mkRetire (Retire_IFC);
 			 : cause_STORE_AMO_ACCESS_FAULT));
 	 rg_tval  <= truncate (x2.addr);
 	 rg_mode <= MODE_EXCEPTION;
+
+	 // Unreserve rd if needed
+	 fa_update_rd (x_rr_to_retire, False, ?);
       end
       else if (x2.rsp_type == MEM_REQ_DEFERRED) begin
 	 wr_log2 (rg_flog, ($format ("INTERNAL_ERROR: CPU.rl_Retire_DMem_rsp:") // \belide{9}
@@ -596,21 +635,23 @@ module mkRetire (Retire_IFC);
 	 f_RR_to_Retire.deq;
 
 	 // Sign-extend data if necessary
-	 let data = x2.data;
-	 if (instr_opcode (x_rr_to_retire.instr) == opcode_LOAD) begin
-	    if (instr_funct3 (x_rr_to_retire.instr) == funct3_LB)
-	       data = signExtend (data [7:0]);
-	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LBU)
-	       data = zeroExtend (data [7:0]);
-	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LH)
-	       data = signExtend (data [15:0]);
-	    else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LHU)
-	       data = zeroExtend (data [15:0]);
-	    // TODO: LW in RV64
-	 end
+	 Bit #(XLEN) rd_val = truncate (x2.data);
+	 if ((instr_opcode (x_rr_to_retire.instr) == opcode_LOAD)
+	     && (instr_rd (x_rr_to_retire.instr) != 0))
+	    begin
+	       if (instr_funct3 (x_rr_to_retire.instr) == funct3_LB)
+		  rd_val = signExtend (rd_val [7:0]);
+	       else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LBU)
+		  rd_val = zeroExtend (rd_val [7:0]);
+	       else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LH)
+		  rd_val = signExtend (rd_val [15:0]);
+	       else if (instr_funct3 (x_rr_to_retire.instr) == funct3_LHU)
+		  rd_val = zeroExtend (rd_val [15:0]);
+	       // TODO: LW in RV64
+	    end
 
 	 // Unreserve/commit rd if needed
-	 fa_update_rd (x_rr_to_retire, True, truncate (data));
+	 fa_update_rd (x_rr_to_retire, True, rd_val);
 
 	 // Redirect Fetch to correct mispredicted PC
 	 Bool mispredicted = (x_rr_to_retire.predicted_pc
@@ -620,6 +661,9 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
+
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
+	 rvfi_report.rvfi_DMem (x_rr_to_retire, x2, rd_val, csrs.mv_instret, epoch);
 
 	 // Resume pipeline behavior
 	 rg_mode <= MODE_PIPE;
@@ -645,6 +689,8 @@ module mkRetire (Retire_IFC);
 			 x_rr_to_retire,
 			 tvec_pc);
       rg_mode <= MODE_PIPE;
+
+      rvfi_report.rvfi_Exception (x_rr_to_retire, tvec_pc, csrs.mv_instret, rg_epoch + 1);
       log_Retire_exception (rg_flog, x_rr_to_retire, rg_epc, is_interrupt, rg_cause, rg_tval);
    endrule                                                    //\elatex{Fife_S5_exc}
                                                               // \blatex{Fife_mkRetire_ifc}
@@ -681,6 +727,10 @@ module mkRetire (Retire_IFC);
    method Action set_MIP_MTIP (Bit #(1) v) = csrs.set_MIP_MTIP (v);
 
    // ----------------------------------------------------------------
+   // Output stream of RVFI reports (to verifier/logger)
+   interface FIFOF_O fo_rvfi_reports = rvfi_report.fo_rvfi_reports;
+
+   // ----------------------------------------------------------------
    // Debugger control
    // For haltreq/resumereq, True result means OK, False means error
 
@@ -704,9 +754,11 @@ module mkRetire (Retire_IFC);
 	 let y = Fetch_from_Retire {next_pc:    dpc,
 				    next_epoch: rg_epoch,
 				    haltreq:    False,
-				    inum:       ?,
-				    pc:         ?,
-				    instr:      ?};
+				    xtra: Fetch_from_Retire_Xtra {
+				       inum:  ?,
+				       pc:    ?,
+				       instr: ?}
+				    };
 	 f_Fetch_from_Retire.enq (y);
 
 

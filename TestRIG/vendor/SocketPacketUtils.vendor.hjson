@@ -1,0 +1,23 @@
+{
+  // Name of the vendored-in project
+  name: "SocketPacketUtils",
+
+  // Target directory: typically equal to the name
+  // All imported code is copied into this directory
+  target_dir: "SocketPacketUtils",
+
+  // Git upstream source code repository
+  upstream: {
+    // Upstream Git repository URL. HTTPS URLs are preferred.
+    url: "https://github.com/CTSRD-CHERI/SocketPacketUtils.git",
+    // Upstream revision or branch. Can be a commit hash or a branch name.
+    rev: "master",
+  },
+
+  // Optional: Pick specific files or subdirectories from upstream and
+  // specify where to put them.
+  mapping: [
+    {from: 'socket_packet_utils.c',    to: 'socket_packet_utils.c'},
+    {from: 'socket_packet_utils.h',    to: 'socket_packet_utils.h'},
+  ]
+}

@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_EX_Control;
 
@@ -90,9 +89,12 @@ function ActionValue #(EX_Control_to_Retire)                // \blatex{fn_EX_Con
 				    tval:       next_pc,
 				    next_pc:    next_pc,
 				    data:       x.fallthru_pc,
-				    inum:       x.inum,                // \belide{36}
-				    pc:         x.pc,
-				    instr:      x.instr};              // \eelide
+                                                                         // \belide{36}
+				    xtra: EX_Control_to_Retire_Xtra {
+				       inum:  x.xtra.inum,
+				       pc:    x.pc,
+				       instr: x.instr}                   // \eelide
+				    };
       return y;
    endactionvalue
 endfunction                                // \elatex{fn_EX_Control}
@@ -105,7 +107,7 @@ function Action log_EX_Control (File flog, RR_to_EX_Control x, EX_Control_to_Ret
       wr_log (flog, $format ("CPU.EX_Control"));
       wr_log_cont (flog, $format ("    ", fshow_RR_to_EX_Control (x)));
       wr_log_cont (flog, $format ("    ", fshow_EX_Control_to_Retire (y)));
-      ftrace (flog, x.inum, x.pc, x.instr, "EX.C", $format (""));
+      ftrace (flog, x.xtra.inum, x.pc, x.instr, "EX.C", $format (""));
    endaction
 endfunction
 

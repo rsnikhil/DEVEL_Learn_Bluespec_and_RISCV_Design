@@ -1,5 +1,4 @@
-// Copyright (c) 2023-2024 Bluespec, Inc.  All Rights Reserved.
-// Author: Rishiyur S. Nikhil
+// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Top;
 
@@ -136,6 +135,13 @@ module mkTop (Empty);
    rule rl_relay_MTIP;
       let t = mems_devices.mv_MTIP;
       cpu.set_MIP_MTIP (t);
+   endrule
+
+   // ================================================================
+   // Drain RVFI packets
+
+   rule rl_drain_RVFI;
+      let t <- pop_o (cpu.fo_rvfi_reports);
    endrule
 
    // ================================================================
