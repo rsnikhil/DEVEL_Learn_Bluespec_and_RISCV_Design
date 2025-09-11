@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package CPU;
 
@@ -62,11 +62,11 @@ Integer verbosity = 0;
 
 `ifndef DRUM_RULES
 
-String cpu_name = "Drum v0.81 2024-08-09 (FSM)";
+String cpu_name = "Drum (FSM version) v0.86 2025-09-09";
 
 `else
 
-String cpu_name = "Drum v0.81 2024-08-09 (Rules)";
+String cpu_name = "Drum (Rules version) v0.86 2025-09-09";
 
 typedef enum {                                                  // \blatex{Drum_Rules_Labels}
    A_FETCH,
@@ -125,6 +125,12 @@ module mkCPU (CPU_IFC);
    Reg #(Bit #(XLEN)) rg_epc       <- mkRegU;
    Reg #(Bit #(4))    rg_cause     <- mkRegU;
    Reg #(Bit #(XLEN)) rg_tval      <- mkRegU;
+
+   // ================================================================
+   // Certain invocations, shared with Fife, need an 'epoch' argument.
+   // This is not relevant for Drum; conceptually, epoch is always 0.
+
+   Epoch dummy_epoch = 0;
 
    // ================================================================
    // Debugger control
@@ -204,10 +210,13 @@ module mkCPU (CPU_IFC);
       end
 
       // The following are only for branch-prediction; not used in Drum // \belide{6}
-      let predicted_pc = 0;
-      let epoch        = 0;                                             // \eelide
+      let predicted_pc = 0;                                             // \eelide
       let y <- fn_Fetch (rg_pc,
-			 predicted_pc, epoch, rg_inum, rg_flog);        // \belide{25}
+			 predicted_pc,                                  // \belide{25}
+			 dummy_epoch,
+			 rg_inum,
+			 rg_inum,
+			 rg_flog);
                                                                         // \eelide
       rg_Fetch_to_Decode <= y.to_D;
       f_IMem_req.enq (y.mem_req);
@@ -224,7 +233,6 @@ module mkCPU (CPU_IFC);
                                                                         // \belide{6}
       log_Decode (rg_flog, y, mem_rsp);                                 // \eelide
    endaction;                                                   // \elatex{Drum_Decode}
-
    // ----------------------------------------------------------------
    Action a_Register_Read_and_Dispatch =                        // \blatex{Drum_RRD}
    action
@@ -276,6 +284,7 @@ module mkCPU (CPU_IFC);
 	 else begin
 	    fa_update_rd (x_direct, rd_val);
 	    fa_redirect_Fetch (x_direct.fallthru_pc);
+	    rvfi_report.rvfi_CSRRxx (x_direct, rd_val, csrs.mv_instret, dummy_epoch);
 	 end
 	 log_Retire_CSRRxx (rg_flog, exc, x_direct);
       end
@@ -284,6 +293,8 @@ module mkCPU (CPU_IFC);
 	 let new_pc <- csrs.mav_xRET;
 	 fa_redirect_Fetch (new_pc);
 	 csrs.ma_incr_instret;
+
+	 rvfi_report.rvfi_MRET (x_direct, new_pc, csrs.mv_instret, dummy_epoch);
 	 log_Retire_MRET (rg_flog, x_direct);
       end
       // ----------------
@@ -337,10 +348,9 @@ module mkCPU (CPU_IFC);
 	 fa_update_rd (x_direct, x_control.data);
 	 fa_redirect_Fetch (x_control.next_pc);
 	 csrs.ma_incr_instret;
+	 rvfi_report.rvfi_Control (x_direct, x_control, csrs.mv_instret, dummy_epoch);
       end
                                                                         // \belide{6}
-      rvfi_report.rvfi_Control (x_control.exception, x_direct,
-				x_control, csrs.mv_instret);
       log_Retire_Control (rg_flog, x_control.exception,
 			  x_direct, x_control);                         // \eelide
    endaction;                                                   // \elatex{Drum_Retire_Control}
@@ -366,12 +376,12 @@ module mkCPU (CPU_IFC);
 	 fa_update_rd (rg_Dispatch.to_Retire, rg_EX_to_Retire.data);
 	 fa_redirect_Fetch (rg_Dispatch.to_Retire.fallthru_pc);
 	 csrs.ma_incr_instret;
+	 rvfi_report.rvfi_Int (rg_Dispatch.to_Retire,                   // \belide{9}
+			       rg_EX_to_Retire,
+			       csrs.mv_instret,
+			       dummy_epoch);                            // \eelide
       end
                                                                         // \belide{6}
-      rvfi_report.rvfi_Int (rg_EX_to_Retire.exception,
-			    rg_Dispatch.to_Retire,
-			    rg_EX_to_Retire,
-			    csrs.mv_instret);
       log_Retire_Int (rg_flog, rg_EX_to_Retire.exception,
 		      rg_Dispatch.to_Retire, rg_EX_to_Retire);          // \eelide
    endaction;                                                   // \elatex{Drum_Retire_Int}
@@ -423,10 +433,14 @@ module mkCPU (CPU_IFC);
 	 end
 	 fa_update_rd (x_direct, truncate (data));
 	 fa_redirect_Fetch (x_direct.fallthru_pc);
-	 csrs.ma_incr_instret;
+	 csrs.ma_incr_instret;                                          // \belide (9)
+	 rvfi_report.rvfi_DMem (x_direct,
+				mem_rsp,
+				truncate (data),
+				csrs.mv_instret,
+				dummy_epoch);                           // \eelide
       end
                                                                         // \belide{6}
-      rvfi_report.rvfi_DMem (exception, x_direct, mem_rsp, csrs.mv_instret);
       log_DMem_NS_rsp (rg_flog, exception, x_direct, mem_rsp);          // \eelide
    endaction;                                                   // \elatex{Drum_Retire_DMem}
 
@@ -441,23 +455,28 @@ module mkCPU (CPU_IFC);
       rg_exception <= False;
       fa_redirect_Fetch (tvec_pc);
                                                                         // \belide{6}
+      rvfi_report.rvfi_Exception (rg_Dispatch.to_Retire,
+				  tvec_pc,
+				  csrs.mv_instret,
+				  dummy_epoch);
+
       log_Retire_exception (rg_flog, rg_Dispatch.to_Retire,
 			    rg_epc, is_interrupt, rg_cause, rg_tval);   // \eelide
    endaction;                                                   // \elatex{Drum_exc}
 
    // ----------------------------------------------------------------
-   function Action a_interrupt (Bit #(4) cause);
+   function Action a_interrupt (Bit #(4) cause1);
       action
 	 Bool        is_interrupt = True;
 	 Bit #(XLEN) tval         = 0;
 	 Bit #(XLEN) tvec_pc <- csrs.mav_exception (rg_pc,
 						    is_interrupt,
-						    cause,
+						    cause1,
 						    tval);
 	 fa_redirect_Fetch (tvec_pc);
 
 	 log_Retire_exception (rg_flog, rg_Dispatch.to_Retire,
-			       rg_pc, is_interrupt, cause, tval);
+			       rg_pc, is_interrupt, cause1, tval);
       endaction
    endfunction
 

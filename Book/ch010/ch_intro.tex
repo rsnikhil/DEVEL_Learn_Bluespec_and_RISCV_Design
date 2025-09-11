@@ -21,7 +21,8 @@
 
 This book has two complementary goals, illustrated in Figure~\ref{Fig_Goals}.
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=\textwidth]{Fig_Goals}}
+% OLD \centerline{\includegraphics[width=\textwidth]{Fig_Goals}}
+  \centerline{\includegraphics[width=\textwidth]{RSN_2025-09-01.002.00_Fig_Goals}}
   \caption{\label{Fig_Goals}Goals for this book}
 \end{figure}
 
@@ -130,27 +131,40 @@ tools}.
 
 Most of the book is focused on designing and verifying Drum and Fife.
 
-We code our designs in {\BSV}.  We use {\BSV} for CPU itself, and for the
-top-level testbench.  For simulation, the supporting ``system''
+We code our designs in {\BSV}.  We use {\BSV} for CPU itself, and for
+the top-level testbench.  For simulation, the supporting ``system''
 components---a Memory, UART and GPIO---are written in C and linked
-into the simulation executable.  For running on FPGA the supporting
-system components use some existing hardware infrastructure.
+into a simulation executable.  For running on FPGA the supporting
+system components use some additional existing hardware
+infrastructure.
 
-We use the \emph{bsc} compiler to translate {\BSV} code into Verilog RTL.
-We simulate the generated Verilog in Verilator, a free and open-source
-Verilog simulation system (the generated Verilog can also run on any
-other Verilog simulator).
+We can simulate the CPU and supporting system on our
+laptop/workstation in two ways:
 
-Verilog simulation provides an exact, cycle-by-cycle accurate
-simulation of the very same design that we run later on an FPGA.
-Simulation is invaluable for debugging the hardware design because the
-turnaround time to fix a problem and run a new simulation is very
-short (minutes) compared to creating a new version for an FPGA
-(several hours).
+\begin{enumerate}
+
+ \item We use the \emph{bsc} compiler to compile {\BSV} code directly
+       into a so-called {\Bluesim} simulation executable.
+
+ \item We use the \emph{bsc} compiler to translate {\BSV} code into
+       Verilog RTL, and then we use the {\Verilator} tool to compile
+       that into a Verilog simulation executable. {\Verilator} is a
+       free and open-source tool.  The generated Verilog can also run
+       on any other Verilog simulator, of which there are many, both
+       commercial and free.
+
+\end{enumerate}
+
+The two methods are cycle-by-cycle accurate with each other.  Further,
+they are cycle-by-cycle accurate with running the same design on an
+FPGA or in an ASIC.  Simulation on a laptop/workstation is invaluable
+for debugging the hardware design because the turnaround time to fix a
+problem and run a new simulation is very short (minutes) compared to
+creating a new version for an FPGA (several hours).
 
 Of course, Verilog simulation runs much more slowly (10,000x or
 slower) compared to an FPGA, and so simulation is useful primarily for
-early debugging and analysis of the design, running small RISC-V
+early debugging and analysis of the design while running small RISC-V
 programs.
 
 In Chapters~\ref{ch_BSV_verification}, \ref{ch_RISCV_verification},
@@ -217,10 +231,10 @@ widely in microarchitecture.  Some design options are:
     multiple instructions flowing through a pipe, each at a more
     advanced stage in its execution than the one behind it?
 
-  \item Predictive? In pipelined implementations, can we predict what
-    instructions to fetch while a BRANCH/JUMP flows through the pipe,
-    before we know the actual next-instruction determined by the
-    BRANCH/JUMP?
+  \item Predictive/Speculative? In pipelined implementations, can we
+    predict/speculate what instructions to fetch while a BRANCH/JUMP
+    flows through the pipe, before we know the actual next-instruction
+    determined by the BRANCH/JUMP?
 
   \item Superscalar/VLIW? Fetch and execute more than one instruction
     in parallel, taking care to preserve sequential ISA semantics?
@@ -298,17 +312,18 @@ Privileged Architecture''~\cite{RISCV_Priv_2021_12_03}.
 \subsection{Drum and Fife}
 
 Drum and Fife are illustrated in
-Figure~\ref{Fig_Two_Microarchitectures}.  Each instruction is taken it
-through the stages shown.
+Figure~\ref{Fig_Two_Microarchitectures}.  Each instruction is taken
+through the same stages, shown.
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=\textwidth]{Fig_Two_Microarchitectures}}
+% OLD \centerline{\includegraphics[width=\textwidth]{Fig_Two_Microarchitectures}}
+  \centerline{\includegraphics[width=\textwidth]{RSN_2025-09-01.001.00_Two_MicroArchs}}
   \caption{\label{Fig_Two_Microarchitectures}Two CPU implementations (microarchitectures)}
 \end{figure}
 
 Drum is a \emph{non-pipelined} implementation.  For each instruction,
-the design is FSM-sequenced through the stages shown in the diagram,
-completing all stages sequentially before starting on the next
-instruction.
+the design is \emph{sequenced} through the stages shown in the
+diagram, using an FSM (Finite State Machine), completing all stages
+sequentially before starting on the next instruction.
 
 Drum is almost a direct transliteration into {\BSV} code of the generic
 ISA execution algorithm described in
@@ -331,8 +346,8 @@ and therefore low power as well).
 Drum is covered in Chapter~\ref{ch_core_functions} through
 Chapter~\ref{ch_Drum_code}.
 
-Fife is a 5+ stage pipelined design, which is a microarchitectural
-change focused on higher performance (speed) than Drum.  All the
+Fife is a 6+ stage pipelined design, which is a microarchitectural
+choice focused on higher performance (speed) than Drum.  All the
 stages in the diagram run \emph{concurrently}, with each stage
 receiving input from the previous stage to its left (``upstream'') and
 producing output for the next stage to its right (``downstream'').

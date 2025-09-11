@@ -1075,24 +1075,34 @@ stages, based on the category of the opcode in the instruction
 
 \item The ``Execute Control'' stage is used for conditional-branch and
 jump instructions.  For the former it evaluates the branch condition
-and, if true, and updates the PC to the branch-target PC.  For jump
-instructions it updates the PC to the jump-target PC. Then, it goes
-back to the Fetch stage to interpret the next instruction.
+and, if true, and computes the branch-target PC.  For jump
+instructions it computes the jump-target PC.  Then, we proceed to the
+``Retire'' stage.
 
 \item The ``Execute Integer Arithmetic and Logic'' stage is used for
 integer arithmetic and logic operations (addition, subtraction,
-boolean ops, shifts, {\etc}).  Then, we proceed to the
-``Register-Write and Increment PC'' stage.
+boolean ops, shifts, {\etc}).  Then, we proceed to the ``Retire''
+stage.
 
-\item The ``Execute Memory Ops'' stage calculates a memory address
-based on an input value (that was read from a GPR) and reads or writes
-memory at that address.  Then, we proceed to the ``Register-Write and
-Increment PC'' stage.
+\item The ``Execute Data Memory (DMem) Ops'' stage calculates a memory
+address based on an input value (that was read from a GPR) and reads
+or writes memory at that address.  Then, we proceed to the ``Retire''
+stage.
 
-\item The ``Register-Write and Increment PC'' stage writes the result
-from the previous Execute stage back into a GPR, and increments the
-PC.  Then, it goes back to the Fetch stage to interpret the next
-instruction.
+\item The ``Direct'' stage is used for all other instructions:
+instructions that have already trapped (Fetch memory errors,
+illegal/unrecognized instructions), CSRRxx instructions, {\etc}.  This
+``stage'' does not do anything is thus shown in the diagram as a
+direct arc to the ``Retire'' stage.
+
+\item The ``Retire'' stage performs instructions that came through the
+Direct path (include CSRRxx instructions) and updates the PC from
+where we will fetch the next instruction.  It also performs all trap
+actions.
+
+\item The ``Register-Writeback'' stage updates a GPR (for those
+instructions that update a GPR).  Then, it goes back to the Fetch
+stage to interpret the next instruction.
 
 \end{itemize}
 
@@ -1102,9 +1112,10 @@ starting each time at the Fetch stage.
 In Figure~\ref{Fig_Instr_Exec}, note that the memory accesses,
 Fetch$\longrightarrow$Memory$\longrightarrow$Decode and Execute
 DMem$\longrightarrow$Memory$\longrightarrow$Execute DMem, are each
-shown with two arrows, one going to and another returning from memory.
-This is because, as discussed in Section~\ref{Sec_mem_split_phase}
-memory-access is always a split-phase operation.
+shown with two arrows, one going to memory and another returning from
+memory.  This is because, as discussed in
+Section~\ref{Sec_mem_split_phase} memory-access is always a
+split-phase operation.
 
 % ****************************************************************
 

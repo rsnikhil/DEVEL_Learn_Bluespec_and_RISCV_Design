@@ -19,7 +19,7 @@ help:
 
 # ================================================================
 
-ALL += Build_and_Run_Guide.html
+ALL += TestRIG_Setup.html
 
 .PHONY: all
 all: $(ALL)

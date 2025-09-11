@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 // ****************************************************************
 // This is a BSV 'include' file, not a standalone BSV package.
@@ -127,9 +127,12 @@
 				      endcase,
 				addr: zeroExtend (pkt_in.rw_addr),
 				data: zeroExtend (pkt_in.rw_wdata),
-				inum: 0,
-				pc: 0,
-				instr: 0};
+				epoch: ?,    // Not relevant for Drum
+				xtra: Mem_Req_Xtra {
+				   inum: 0,
+				   pc: 0,
+				   instr: 0}
+				};
 	 f_dbg_to_mem_req.enq (mem_req);
 	 if (verbosity_CPU_Dbg > 1) begin
 	    $display ("CPU_Dbg.stmt_rw_mem");

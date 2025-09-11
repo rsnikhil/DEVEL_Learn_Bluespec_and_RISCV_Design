@@ -189,9 +189,9 @@ module mkCPU_and_Mem (CPU_and_Mem_IFC);
 
    rule rl_relay_instrs_from_TestRIG;
       let req = cpu.fo_IMem_req.first;
-      Bit #(64) arch_inum  = req.data;
+      Bit #(64) arch_inum = req.data;
       if (verbosity != 0) begin
-	 $display ("deq (in CPU_and_Mem.rl_relay_instrs)");
+	 $display ("deq (in Top_TestRIG.CPU_and_Mem.rl_relay_instrs)");
 	 $display ("    arch_inum last %0d now %0d", rg_last_arch_inum, arch_inum);
 	 $display ("    epoch last %0d now %0d", rg_epoch, req.epoch);
 	 match { .tl, .qsize } = instr_queue.mv_q_tl_size;
@@ -253,7 +253,7 @@ module mkCPU_and_Mem (CPU_and_Mem_IFC);
       rpt.rvfi_pc_wdata = rpt.rvfi_pc_wdata & (~ zeroExtend (epoch_mask));
       f_rvfi_reports.enq (rpt);
       if (verbosity != 0) begin
-	 $display ("rl_relay_rvfi_reports: to TestRIG");
+	 $display ("rl_relay_rvfi_reports: to TestRIG (in Top_TestRIG.CPU_and_Mem)");
 	 $display ("    ", fshow2_RVFI_DII_Execution (rpt));
       end
    endrule

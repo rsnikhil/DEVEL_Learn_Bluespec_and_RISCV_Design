@@ -33,10 +33,6 @@ FIGS += Fig_FIFO_Producer_Consumer.png
 FIGS += Fig_FSM_Bubble_and_Arrow.png
 FIGS += Fig_FSMs_Concurrent.png
 FIGS += Fig_FSMs_Structured.png
-FIGS += Fig_Goals.png
-FIGS += Fig_Instr_Exec.png
-FIGS += Fig_Instr_Exec_w_structs.png
-FIGS += Fig_Instr_Exec_w_FIFOs.png
 FIGS += Fig_Interface_Buses.png
 FIGS += Fig_ISA_Modularity.png
 FIGS += Fig_J_imm.png
@@ -62,13 +58,21 @@ FIGS += Fig_Testbench_DUT.png
 FIGS += Fig_Topics.png
 FIGS += Fig_Trap_CSRs.png
 FIGS += Fig_Trap_Return.png
-FIGS += Fig_Two_Microarchitectures.png
 FIGS += Fig_What_is_an_ISA.png
 
+# FIGS += Fig_Instr_Exec.png
+# FIGS += Fig_Instr_Exec_w_structs.png
+# FIGS += Fig_Instr_Exec_w_FIFOs.png
 FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1.png
 FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L4.png
 FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L3.png
 FIGS += RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L2_L3.png
+
+# FIGS += Fig_Goals.png
+FIGS += RSN_2025-09-01.002.00_Fig_Goals.png
+
+# FIGS += Fig_Two_Microarchitectures.png
+FIGS += RSN_2025-09-01.001.00_Two_MicroArchs.png
 
 .PHONY: help
 help:
@@ -81,10 +85,13 @@ png: $(FIGS)
 %.png: %.svg
 	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
 
+DIAGRAMS_2025 = $(HOME)/Diagrams/2025
+
+RSN_%.png: $(DIAGRAMS_2025)/RSN_%.svg
+	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
+
 # ================================================================
 # Rules to extract selected layers of SVG into separate PNGs
-
-DIAGRAMS_2025 = $(HOME)/Diagrams/2025
 
 LAYER_1 = 'select-all:layers; object-set-attribute:style, display:none; select-clear; select-by-id:layer1; object-set-attribute:style, display:inline'
 

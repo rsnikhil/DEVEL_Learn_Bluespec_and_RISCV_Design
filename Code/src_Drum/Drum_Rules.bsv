@@ -73,9 +73,8 @@
       rg_action <= A_FETCH;
    endrule
                                                                 // \elatex{Drum_Rules}
-
    rule rl_take_interrupt ((rg_runstate == CPU_RUNNING)
-			   && (! can_take_intr));
+			   && can_take_intr);
       a_interrupt (cause);
    endrule
 
