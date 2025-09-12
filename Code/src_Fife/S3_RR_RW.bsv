@@ -78,8 +78,8 @@ module mkRR_RW (RR_RW_IFC);
 
    // General-Purpose Registers (GPRs)
    GPRs_IFC #(XLEN)  gprs <- mkGPRs_synth;
-   // Logging reg access, for debugging, formal verification, etc.
-   GPR_Logging_IFC #(XLEN) gpr_logging <- mkGPR_Logging_synth;
+   // Logging reg access, for debugging, formal verification, etc.    // \belide{3}
+   GPR_Logging_IFC #(XLEN) gpr_logging <- mkGPR_Logging_synth;        // \eelide
 
    // Scoreboard for GPRs
    Reg #(Scoreboard) rg_scoreboard <- mkReg (replicate (0));    // \elatex{Fife_mkRR_RW1}
@@ -128,12 +128,12 @@ module mkRR_RW (RR_RW_IFC);
 	 // Ok even if instr does not have rs1 or rs2
 	 // values used only if relevant.
 	 let rs1_val = gprs.read_rs1 (rs1);
-	 if (x.has_rs1)
-	    gpr_logging.log_rs1_read (x.xtra.inum, rs1, rs1_val);
+	 if (x.has_rs1)                                                    // \belide{9}
+	    gpr_logging.log_rs1_read (x.xtra.inum, rs1, rs1_val);          // \eelide
 
 	 let rs2_val = gprs.read_rs2 (rs2);
-	 if (x.has_rs2)
-	    gpr_logging.log_rs2_read (x.xtra.inum, rs2, rs2_val);
+	 if (x.has_rs2)                                                    // \belide{9}
+	    gpr_logging.log_rs2_read (x.xtra.inum, rs2, rs2_val);          // \eelide
 
 	 // Dispatch to one of the next-stage pipes
 	 Result_Dispatch y <- fn_Dispatch (x, rs1_val, rs2_val, rg_flog);
@@ -197,7 +197,8 @@ module mkRR_RW (RR_RW_IFC);
 
       if (x.commit) begin
 	 gprs.write_rd (x.rd, x.data);
-	 gpr_logging.log_rd_write (x.xtra.inum, x.rd);
+	 gpr_logging.log_rd_write (x.xtra.inum, x.rd);                            // \belide{9}
+                                                                                  // \eelide
       end
                                                                                   // \belide{6}
       // ---------------- DEBUG

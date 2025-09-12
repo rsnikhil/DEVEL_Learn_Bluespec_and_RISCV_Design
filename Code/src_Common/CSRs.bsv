@@ -76,7 +76,7 @@ interface CSRs_IFC;                                                // \blatex{CS
 
    // INSTRET access
    method Action ma_incr_instret;
-   method Bit #(64) mv_instret;
+   method Bit #(64) mv_instret;                                        // \belide{3}
 
    // Set TIME
    (* always_ready, always_enabled *)
@@ -98,7 +98,7 @@ interface CSRs_IFC;                                                // \blatex{CS
    (* always_ready *)
    method Bit #(XLEN) get_dpc;
    (* always_ready *)
-   method Bit #(32)   get_dcsr;
+   method Bit #(32)   get_dcsr;                                        // \eelide
 endinterface                                                       // \elatex{CSRs_IFC}
 
 // ****************************************************************

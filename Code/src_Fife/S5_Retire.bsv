@@ -59,7 +59,7 @@ interface Retire_IFC;
    // Set MIP.MTIP
    (* always_ready, always_enabled *)
    method Action set_MIP_MTIP (Bit #(1) v);
-
+                                                                        // \belide{3}
    // ----------------------------------------------------------------
    // Output stream of RVFI reports (to verifier/logger)
    interface FIFOF_O #(RVFI_DII_Execution #(XLEN, 64)) fo_rvfi_reports;
@@ -76,7 +76,7 @@ interface Retire_IFC;
    method ActionValue #(Bool)
           csr_write (Bit #(12) csr_addr, Bit #(XLEN) csr_val);
    method ActionValue #(Tuple2 #(Bool, Bit #(XLEN)))
-          csr_read (Bit #(12) csr_addr);
+          csr_read (Bit #(12) csr_addr);                                // \eelide
 endinterface
                                                               // \elatex{Fife_Retire_IFC}
 // ****************************************************************
@@ -182,8 +182,7 @@ module mkRetire (Retire_IFC);
 	       rg_epoch <= next_epoch;
 	       let y = Fetch_from_Retire {next_pc:    next_pc,
 					  next_epoch: next_epoch,
-					  haltreq:    haltreq,
-                                                                                // \belide{42}
+					  haltreq:    haltreq,                  // \belide{42}
 					  xtra: Fetch_from_Retire_Xtra {
 					     inum:  x1.xtra.inum,
 					     pc:    x1.pc,
@@ -358,8 +357,11 @@ module mkRetire (Retire_IFC);
 			    (rg_runstate == S5_HALTREQ),
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
-	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
-	 rvfi_report.rvfi_CSRRxx (x_rr_to_retire, rd_val, csrs.mv_instret, epoch);
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);      // \belide{9}
+	 rvfi_report.rvfi_CSRRxx (x_rr_to_retire,
+				  rd_val,
+				  csrs.mv_instret,
+				  epoch);                           // \eelide
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -384,10 +386,9 @@ module mkRetire (Retire_IFC);
 			 x_rr_to_retire,
 			 new_pc);
       csrs.ma_incr_instret;
-
+                                                                          // \belide{6}
       let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
       rvfi_report.rvfi_MRET (x_rr_to_retire, new_pc, csrs.mv_instret, epoch);
-                                                                          // \belide{6}
       log_Retire_MRET (rg_flog, x_rr_to_retire);                          // \eelide
    endrule
                                                                 //\elatex{Fife_rl_MRET}
@@ -466,8 +467,8 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x2.next_pc);
 	 csrs.ma_incr_instret;
-	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
-	 rvfi_report.rvfi_Control (x_rr_to_retire, x2, csrs.mv_instret, epoch);
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);                   // \belide{9}
+	 rvfi_report.rvfi_Control (x_rr_to_retire, x2, csrs.mv_instret, epoch);  // \eelide
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -499,8 +500,11 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
-	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
-	 rvfi_report.rvfi_Int (x_rr_to_retire, x2, csrs.mv_instret, epoch);
+	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);       // \belide{9}
+	 rvfi_report.rvfi_Int (x_rr_to_retire,
+			       x2,
+			       csrs.mv_instret,
+			       epoch);                               // \eelide
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -556,9 +560,12 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
-
+                                                                   // \belide{9}
 	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
-	 rvfi_report.rvfi_DMem (x_rr_to_retire, x2, rd_val, csrs.mv_instret, epoch);
+	 rvfi_report.rvfi_DMem (x_rr_to_retire,
+				x2, rd_val,
+				csrs.mv_instret,
+				epoch);                            // \eelide
       end
       else begin
 	 rg_epc   <= x_rr_to_retire.pc;
@@ -661,9 +668,13 @@ module mkRetire (Retire_IFC);
 			    x_rr_to_retire,
 			    x_rr_to_retire.fallthru_pc);
 	 csrs.ma_incr_instret;
-
+                                                                   // \belide{9}
 	 let epoch = (mispredicted ? rg_epoch + 1 : rg_epoch);
-	 rvfi_report.rvfi_DMem (x_rr_to_retire, x2, rd_val, csrs.mv_instret, epoch);
+	 rvfi_report.rvfi_DMem (x_rr_to_retire,
+				x2,
+				rd_val,
+				csrs.mv_instret,
+				epoch);                            // \eelide
 
 	 // Resume pipeline behavior
 	 rg_mode <= MODE_PIPE;
@@ -689,9 +700,17 @@ module mkRetire (Retire_IFC);
 			 x_rr_to_retire,
 			 tvec_pc);
       rg_mode <= MODE_PIPE;
-
-      rvfi_report.rvfi_Exception (x_rr_to_retire, tvec_pc, csrs.mv_instret, rg_epoch + 1);
-      log_Retire_exception (rg_flog, x_rr_to_retire, rg_epc, is_interrupt, rg_cause, rg_tval);
+                                                                  // \belide{6}
+      rvfi_report.rvfi_Exception (x_rr_to_retire,
+				  tvec_pc,
+				  csrs.mv_instret,
+				  rg_epoch + 1);
+      log_Retire_exception (rg_flog,
+			    x_rr_to_retire,
+			    rg_epc,
+			    is_interrupt,
+			    rg_cause,
+			    rg_tval);                             // \eelide
    endrule                                                    //\elatex{Fife_S5_exc}
                                                               // \blatex{Fife_mkRetire_ifc}
    // ================================================================

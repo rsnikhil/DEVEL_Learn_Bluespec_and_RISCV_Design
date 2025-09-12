@@ -126,13 +126,13 @@ module mkCPU (CPU_IFC);
    Reg #(Bit #(4))    rg_cause     <- mkRegU;
    Reg #(Bit #(XLEN)) rg_tval      <- mkRegU;
 
-   // ================================================================
+   // ================================================================    // \belide{3}
    // Certain invocations, shared with Fife, need an 'epoch' argument.
    // This is not relevant for Drum; conceptually, epoch is always 0.
 
    Epoch dummy_epoch = 0;
 
-   // ================================================================
+   // ================================================================    // \eelide
    // Debugger control
    Reg #(Bit #(XLEN)) rg_dpc        <- mkRegU;
    Reg #(Bit #(3))    rg_dcsr_cause <- mkReg (dcsr_cause_ebreak);
@@ -284,9 +284,13 @@ module mkCPU (CPU_IFC);
 	 else begin
 	    fa_update_rd (x_direct, rd_val);
 	    fa_redirect_Fetch (x_direct.fallthru_pc);
-	    rvfi_report.rvfi_CSRRxx (x_direct, rd_val, csrs.mv_instret, dummy_epoch);
+	    rvfi_report.rvfi_CSRRxx (x_direct,                      // \belide{12}
+				     rd_val,
+				     csrs.mv_instret,
+				     dummy_epoch);                  // \eelide
 	 end
-	 log_Retire_CSRRxx (rg_flog, exc, x_direct);
+                                                                    // \belide{9}
+	 log_Retire_CSRRxx (rg_flog, exc, x_direct);                // \eelide
       end
       // ----------------
       else if (is_legal_MRET (x_direct.instr)) begin
@@ -294,8 +298,11 @@ module mkCPU (CPU_IFC);
 	 fa_redirect_Fetch (new_pc);
 	 csrs.ma_incr_instret;
 
-	 rvfi_report.rvfi_MRET (x_direct, new_pc, csrs.mv_instret, dummy_epoch);
-	 log_Retire_MRET (rg_flog, x_direct);
+	 rvfi_report.rvfi_MRET (x_direct,                          // \belide{12}
+				new_pc,
+				csrs.mv_instret,
+				dummy_epoch);
+	 log_Retire_MRET (rg_flog, x_direct);                      // \eelide
       end
       // ----------------
       else if (is_legal_ECALL (x_direct.instr)
@@ -309,7 +316,8 @@ module mkCPU (CPU_IFC);
 				cause,
 				0);             // tval
 	    csrs.ma_incr_instret;
-	    log_Retire_ECALL_EBREAK (rg_flog, x_direct);
+                                                                    // \belide{12}
+	    log_Retire_ECALL_EBREAK (rg_flog, x_direct);            // \eelide
 	 end
       // ----------------
       else if (is_legal_EBREAK (x_direct.instr)
@@ -348,7 +356,10 @@ module mkCPU (CPU_IFC);
 	 fa_update_rd (x_direct, x_control.data);
 	 fa_redirect_Fetch (x_control.next_pc);
 	 csrs.ma_incr_instret;
-	 rvfi_report.rvfi_Control (x_direct, x_control, csrs.mv_instret, dummy_epoch);
+	 rvfi_report.rvfi_Control (x_direct,                            // \belide{9}
+				   x_control,
+				   csrs.mv_instret,
+				   dummy_epoch);                        // \eelide
       end
                                                                         // \belide{6}
       log_Retire_Control (rg_flog, x_control.exception,
@@ -400,9 +411,9 @@ module mkCPU (CPU_IFC);
    action
       let x_direct = rg_Dispatch.to_Retire;
       let mem_rsp <- pop_o (to_FIFOF_O (f_DMem_rsp));
-
+                                                                                // \belide{6}
       dynamicAssert ((mem_rsp.rsp_type != MEM_REQ_DEFERRED),
-		     "Mem req not speculative but got DEFERRED mem response");
+		     "Mem req not speculative but got DEFERRED mem response");  // \eelide
 
       Bool exception = ((mem_rsp.rsp_type == MEM_RSP_ERR)
 			|| (mem_rsp.rsp_type == MEM_RSP_MISALIGNED));

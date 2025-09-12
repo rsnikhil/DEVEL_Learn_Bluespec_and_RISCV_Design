@@ -41,7 +41,7 @@ interface CPU_IFC;
    // DMem, non-speculative
    interface FIFOF_O #(Mem_Req) fo_DMem_req;
    interface FIFOF_I #(Mem_Rsp) fi_DMem_rsp;
-
+                                                                // \belide{3}
    // Set TIME
    (* always_ready, always_enabled *)
    method Action set_TIME (Bit #(64) t);
@@ -61,7 +61,7 @@ interface CPU_IFC;
    interface FIFOF_O #(Dbg_from_CPU_Pkt) fo_dbg_from_CPU_pkt;
    // Memory requests/responses for remote debugger
    interface FIFOF_O #(Mem_Req) fo_dbg_to_mem_req;
-   interface FIFOF_I #(Mem_Rsp) fi_dbg_from_mem_rsp;
+   interface FIFOF_I #(Mem_Rsp) fi_dbg_from_mem_rsp;            // \eelide
 endinterface
                                                                 // \elatex{CPU_IFC}
 // ****************************************************************

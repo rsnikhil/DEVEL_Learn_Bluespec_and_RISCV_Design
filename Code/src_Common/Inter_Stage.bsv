@@ -167,7 +167,7 @@ typedef struct {                                  // \blatex{EX_to_Retire}
    Bit #(4)     cause;
    Bit #(XLEN)  tval;
 
-   // If note exception
+   // If not exception
    Bit #(XLEN)  data;
                                                     // \belide{3}
    EX_to_Retire_Xtra  xtra;                         // \eelide
