@@ -665,4 +665,74 @@ See also Appendix~\ref{apx_Why_BSV} for more discussion on this topic.
 \end{minipage}}
 % ----------------
 
+% ================================================================
+
+\subsection{Adding more RISC-V register-to-register instructions to Drum}
+
+\index[RV]{Drum!Adding instructions for M, F/D and Custom extensions}
+
+The RISC-V instruction set is modular, based on a baseline of integer
+instructions (RV32I), with many standard optional extensions, such as:
+
+\begin{itemize}
+ \item {\bf M}: Integer multiply and divide instructions
+ \item {\bf F}, {\bf D}: Single- and Double-Precision Floating Point instructions
+ \item Other custom instructions
+\end{itemize}
+
+The Drum design of Figure~\ref{Fig_Drum_Instr_Exec} can easily be
+extended to accomodate such register-to-register extensions, by adding
+more execution stages as illustrated in
+Figure~\ref{Fig_Additional_RISCV_Instructions}.
+\begin{figure}[htbp]
+  \centerline{\includegraphics[width=6in,angle=0]{Figures/RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L4}}
+  \caption{\label{Fig_Additional_RISCV_Instructions}
+           Adding more RISC-V instructions}
+\end{figure}
+
+The {\tt OpClass} type in {\tt Inter\_Stage.bsv} needs to be extended
+to handle the new classes of instructions (M, FD, Custom).  The
+Ddecode stage's big if-then-else must be extended to handle these new
+kinds of instructions.  The Register-Read-and-Dispatch stage must be
+extended to dispatch into the new execution pipelines.  It can reuse
+the existing register-read facilities.  The Retire stage needs to
+field the results from the new execution pipelines and retire those
+instructions.  It can reuse the existing register-write and exception
+facilities.
+
+To implement the F and D instructions, we need a second register file
+similar to the GPRs, to hold the bit representations of floating-point
+values.  Register-read and register-write logic now needs to be
+cognizant of which register file we are addressing.
+
+\index[RV]{Latency-tolerant design}
+
+The actual functional logic for M, F/D and/or Custom will be entirely
+internal to the respective EX\_Int\_Mul\_Div, EX\_Floating\_Point or
+EX\_Custom stages.  Note, these stages can have variable latency;
+indeed they are likely to take many cycles for their computations,
+which are more complex than simple interger ops.  However, no
+modification is necessary to the rest of Drum (or Fife) to accommodate
+these additional latencies; Drum and Fife are both
+``latency-tolerant'' designs so it is easy to replace/add units with
+different latencies.
+
+% ================================================================
+
+\subsection{Adding RISC-V Atomic Memory Op instructions to Drum}
+
+\index[RV]{Drum!Adding instructions for the A-extension}
+
+The modular RISC-V instruction set also has an ``{\bf A}'' extension
+for atomic memory read-modify-write operations, such as AMOSWAP and
+AMOADD.  These ops both read and write memory.  For example, AMOSWAP
+writes a value to memory like STORE, and returns the previous value
+from that location, like LOAD.
+
+These, too, are easily added to Drum and Fife.  As far as the CPU is
+concerned, these are merely new memory opcodes, just like the LOAD and
+STORE opcodes.  All the work is really done outside the CPU in the
+memory system.  In Drum and Fife, we'd reuse the EX\_DMem facilities,
+just decoding and transmitting the new memory opcodes.
+
 % ****************************************************************
