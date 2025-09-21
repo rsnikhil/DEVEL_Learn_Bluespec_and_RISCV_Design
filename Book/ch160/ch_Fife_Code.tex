@@ -587,48 +587,19 @@ The remaining code is a nested if-then-else that sends information
 into the appropriate Execute pipe (Execute Control, Execute Integer,
 or DMem).
 
-% ----------------
-\hdivider
+% ----------------------------------------------------------------
 
-\Exercise
+\EXERCISE{Ex-16-A-Register-Read-and-Dispatch}
 
-Consider this hypothetical scenario: suppose the \verb|stall|
-condition is false.  Then, we need to dequeue \verb|f_Decode_to_RR|
-and do one or more enqueues into \verb|f_RR_to_Retire| and
-\verb|f_RR_to_EX_Control|, \verb|f_RR_to_EX_Int| or
-\verb|f_DMem_S_req.enq|.  Is it possible that we perform the dequeue
-and then are unable to perform the enqueue(s) because the
-corresponding output FIFO happens to be full?
+% ----------------------------------------------------------------
 
-\emph{Hint:} rule atomicity
+\EXERCISE{Ex-16-B-Rule-Conditions}
 
-\Exercise
+% ----------------------------------------------------------------
 
-Write a boolean expression representing the overall firing condition
-for the rule.  Briefly: all FIFO-modifying actions (dequeue, enqueue)
-have implicit conditions, but for each FIFO, that condition is only
-relevant if the conditions on the surrounding if-then-else's select
-that action.
+\EXERCISE{Ex-16-C-Debugging-Stalled-Rules}
 
-% ----------------
-\hdivider
-
-\Exercise
-
-When debugging the implementation, it is useful to know if, due to
-some coding mistake, rule \verb|rl_RR_Dispatch| is stalled forever.
-For example, for some instruction with an rd, if the Retire stage did
-not send back the rd's scoreboard-release, that register will be
-forever ``busy''.
-
-Add a register to count consecutive stalls, initially 0.  In the rule,
-whenever we successfully dispatch an instruction, reset the counter to
-0.  Whenever we stall, increment the stall counter, and if the
-stall-counter reaches some chosen threshold value, prints debugging
-messages and executes \verb|$finish| to terminate simulation.
-
-\Endexercise
-% ----------------
+% ----------------------------------------------------------------
 
 The third part of the \verb|mkRR_RW| module, implementing its BEHAVIOR
 for the backward flow, is shown below:
@@ -885,36 +856,13 @@ registers.  Rule \verb|rl_Retire_CSRRxx| invokes method
 separate rules, we avoid contention between these two CSR module
 methods.
 
-% ----------------
+% ----------------------------------------------------------------
 
-\Exercise
+\EXERCISE{Ex-16-D-CSR-Method-Conflict}
 
-The provided implementation of the CSR registers
-(Section~\ref{Sec_RISCV_CSRs}) will in fact prevent the two methods
-\verb|csrs.mav_csrrrxx()| and \verb|csrs.mav_exception()| from being
-invoked in a single action, {\ie} in a single rule, due to
-method-ordering constraints.  Try this experiment: copy the body of
-\verb|rl_exception| into \verb|rl_Retire_CSRRxx|; try compiling it
-with \verb|bsc|, and observe the compiler's complaint message.
+% ----------------------------------------------------------------
 
-\Exercise
-
-Modify the CSRs module method \verb|mav_csrrxx()| to combine the
-actions of the original \verb|mav_csrrrxx()| with the actions of
-\verb|mav_exception()|.  The result type will have to be extended
-(say, a 3-tuple) to also return the trap-vector PC in case of an
-exception.  Modify \verb|rl_Retire_CSRRxx| so that it immediately does
-a Fetch-redirect with the trap-vector PC in case of an exception.
-There is no longer any need to shift out of \verb|MODE_PIPE| into
-\verb|MODE_EXCEPTION|.
-
-\vspace{1ex}
-
-This will save a cycle in handling CSRRxx instructions.  But what is
-the impact on hardware complexity in the \verb|mkCSRs| module?
-
-\Endexercise
-% ----------------
+\EXERCISE{Ex-16-E-Resolving-a-CSR-Method-Conflict}
 
 % ----------------------------------------------------------------
 
@@ -937,6 +885,8 @@ MEPC (Section~\ref{Sec_Traps}).
 
 \subsubsection{Rule to retire ECALL and EBREAK instructions (direct path)}
 
+\label{Sec_Retire_ECALL_EBREAK}
+
 The following rule handles ECALL and EBREAK instructions, which arrive on the direct path:
 
 \SHOWCODE{Code_Extracts/Fife_rl_ECALL.tex}
@@ -952,27 +902,9 @@ difference being the exception-code we pass in the \verb|mcause| CSR
 values and switch from \verb|MODE_PIPE| to \verb|MODE_EXCEPTION|,
 which will handle the exception.
 
-% ----------------
+% ----------------------------------------------------------------
 
-\Exercise
-
-In the exercises in Section~\ref{Sec_Fife_Retire_CSRRxx}, we discussed
-why, in \verb|rl_Retire_CSRRxx| we postponed exception handling to the
-separate rule \verb|rl_exception|: \verb|rl_Retire_CSRRxx| itself
-accesses the CSRs, and \verb|rl_exception| accesses the CSRs, and we
-wanted to avoid contention.
-
-\vspace{1ex}
-
-Here, \verb|rl_Retire_ECALL_EBREAK| does not otherwise access the
-CSRs, so there is no such contention, so why not handle the exception
-directly here (copy the body of \verb|rl_exception| here) and save a
-cycle?  Discuss the impact on hardware structure.  Try it, examine the
-generated Verilog, and examine the performance impact (which will
-depend on the RISC-V program being run, of course).
-
-\Endexercise
-% ----------------
+\EXERCISE{Ex-16-F-ECALL-EBREAK}
 
 % ----------------------------------------------------------------
 
@@ -1129,16 +1061,9 @@ exception and the kind of instruction.  We do not need to use
 store-buffer because a DMem instruction, if it raises an exception,
 will not perform any speculative stores.
 
-% ----------------
+% ----------------------------------------------------------------
 
-\Exercise
-
-Inside \verb|rl_Retire_EX_DMem| we invoke ``\verb|fa_update_rd()|''
-always, but we invoke ``\verb|f_retire_store_buf()|'' only when there
-was no exception.  Justify this.
-
-\Endexercise
-% ----------------
+\EXERCISE{Ex-16-G-Rd-vs-Store-Buffer}
 
 % ----------------------------------------------------------------
 
@@ -1198,15 +1123,9 @@ Finally, we redirect the Fetch stage if mispredicted, and return to
 predicted successor PC for this instruction with its fall-through PC
 to determine if there was a misprediction.
 
-% ----------------
+% ----------------------------------------------------------------
 
-\Exercise
-
-This rule fields a memory response, but does not send any
-commit/discard message to the store-buffer.  Why not?
-
-\Endexercise
-% ----------------
+\EXERCISE{Ex-16-H-Retiring Deferred DMem}
 
 % ================================================================
 

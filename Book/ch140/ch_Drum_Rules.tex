@@ -60,6 +60,8 @@ side-by-side, to see how straightforward it is manually to translate a
 
 \subsection{Optimizing the Drum rules}
 
+\label{Sec_Optimiizing_Drum_Rules}
+
 If we execute the Drum CPU on a RISC-V program and study the detailed,
 cycle-by-cycle execution trace, we will see many possibilities to
 eliminate ``wasted'' cycles.
@@ -112,16 +114,9 @@ becomes less structured, with ad-hoc jumps from some rules back to
 Fetch, {\etc}.  \verb|StmtFSM| can only express structured,
 properly-nested flows.
 
-% ----------------
-\hdivider
+% ----------------------------------------------------------------
 
-\Exercise
-
-Implement some or all the ideas above and measure the results (circuit
-size, achievable clock speed, application program speed).
-
-\Endexercise
-% ----------------
+\EXERCISE{Ex-14-A-Optimizing-Drum-Rules}
 
 % ****************************************************************
 

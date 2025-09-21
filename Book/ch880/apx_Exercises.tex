@@ -1191,6 +1191,25 @@ statements?
 
 \hdivider
 
+\section*{Chapter 14: RISC-V: the Drum unpipelined CPU (using Rules instead of {\tt StmtFSM})}
+
+% ================================================================
+
+\subsection*{Ex-14-A: Optimizing Trum Rules}
+\label{Ex-14-A-Optimizing-Drum-Rules}
+
+(Please refer Section~\ref{Sec_Optimiizing_Drum_Rules}.)
+
+Implement some or all the ideas in
+Section~\ref{Sec_Optimiizing_Drum_Rules} and measure the results
+(circuit size, achievable clock speed, application program speed).
+
+% ================================================================
+
+% ****************************************************************
+
+\hdivider
+
 \section*{Chapter 15: RISC-V: the Fife Pipelined CPU: Principles}
 
 % ================================================================
@@ -1315,6 +1334,138 @@ consequences of a wrong order?
        this.
 
 \end{itemize}
+
+% ****************************************************************
+
+\hdivider
+
+\section*{Chapter 16: RISC-V: the Fife pipelined CPU code}
+
+% ================================================================
+
+\subsection*{Ex-16-A: Rule Atomicity}
+\label{Ex-16-A-Register-Read-and-Dispatch}
+
+(Please refer Section~\ref{Sec_mkRR_RW}.)
+
+Consider this hypothetical scenario: suppose the \verb|stall|
+condition is false.  Then, we need to dequeue \verb|f_Decode_to_RR|
+and do one or more enqueues into \verb|f_RR_to_Retire| and
+\verb|f_RR_to_EX_Control|, \verb|f_RR_to_EX_Int| or
+\verb|f_DMem_S_req.enq|.  Is it possible that we perform the dequeue
+and then are unable to perform the enqueue(s) because the
+corresponding output FIFO happens to be full?
+
+\emph{Hint:} rule atomicity
+
+% ================================================================
+
+\subsection*{Ex-16-B: Rule conditions}
+\label{Ex-16-B-Rule-Conditions}
+
+(Please refer Section~\ref{Sec_mkRR_RW}.)
+
+Write a boolean expression representing the overall firing condition
+for the rule.  Briefly: all FIFO-modifying actions (dequeue, enqueue)
+have implicit conditions, but for each FIFO, that condition is only
+relevant if the conditions on the surrounding if-then-else's select
+that action.
+
+% ================================================================
+
+\subsection*{Ex-16-C: Debugging Stalled Rules}
+\label{Ex-16-C-Debugging-Stalled-Rules}
+
+(Please refer Section~\ref{Sec_mkRR_RW}.)
+
+When debugging the implementation, it is useful to know if, due to
+some coding mistake, rule \verb|rl_RR_Dispatch| is stalled forever.
+For example, for some instruction with an rd, if the Retire stage did
+not send back the rd's scoreboard-release, that register will be
+forever ``busy''.
+
+Add a register to count consecutive stalls, initially 0.  In the rule,
+whenever we successfully dispatch an instruction, reset the counter to
+0.  Whenever we stall, increment the stall counter, and if the
+stall-counter reaches some chosen threshold value, prints debugging
+messages and executes \verb|$finish| to terminate simulation.
+
+% ================================================================
+
+\subsection*{Ex-16-D: CSR method conflict}
+\label{Ex-16-D-CSR-Method-Conflict}
+
+(Please refer Section~\ref{Sec_Fife_Retire_CSRRxx}.)
+
+The provided implementation of the CSR registers
+(Section~\ref{Sec_RISCV_CSRs}) will in fact prevent the two methods
+\verb|csrs.mav_csrrxx()| and \verb|csrs.mav_exception()| from being
+invoked in a single action, {\ie} in a single rule, due to
+method-ordering constraints.  Try this experiment: copy the body of
+\verb|rl_exception| into \verb|rl_Retire_CSRRxx|; try compiling it
+with \verb|bsc|, and observe the compiler's complaint message.
+
+% ================================================================
+
+\subsection*{Ex-16-E: Resolving a CSR method conflict}
+\label{Ex-16-E-Resolving-a-CSR-Method-Conflict}
+
+(Please refer Section~\ref{Sec_Fife_Retire_CSRRxx}.)
+
+Modify the CSRs module method \verb|mav_csrrxx()| to combine the
+actions of the original \verb|mav_csrrrxx()| with the actions of
+\verb|mav_exception()|.  The result type will have to be extended
+(say, a 3-tuple) to also return the trap-vector PC in case of an
+exception.  Modify \verb|rl_Retire_CSRRxx| so that it immediately does
+a Fetch-redirect with the trap-vector PC in case of an exception.
+There is no longer any need to shift out of \verb|MODE_PIPE| into
+\verb|MODE_EXCEPTION|.
+
+This will save a cycle in handling CSRRxx instructions.  But what is
+the impact on hardware complexity in the \verb|mkCSRs| module?
+
+% ================================================================
+
+\subsection*{Ex-16-F: ECALL/EBREAK}
+\label{Ex-16-F-ECALL-EBREAK}
+
+(Please refer Section~\ref{Sec_Retire_ECALL_EBREAK}.)
+
+In the exercises in Section~\ref{Sec_Fife_Retire_CSRRxx}, we discussed
+why, in \verb|rl_Retire_CSRRxx| we postponed exception handling to the
+separate rule \verb|rl_exception|: \verb|rl_Retire_CSRRxx| itself
+accesses the CSRs, and \verb|rl_exception| accesses the CSRs, and we
+wanted to avoid contention.
+
+\vspace{1ex}
+
+Here, \verb|rl_Retire_ECALL_EBREAK| does not otherwise access the
+CSRs, so there is no such contention, so why not handle the exception
+directly here (copy the body of \verb|rl_exception| here) and save a
+cycle?  Discuss the impact on hardware structure.  Try it, examine the
+generated Verilog, and examine the performance impact (which will
+depend on the RISC-V program being run, of course).
+
+% ================================================================
+
+\subsection*{Ex-16-G: Update Rd {\vs} Retire Store Buffer}
+\label{Ex-16-G-Rd-vs-Store-Buffer}
+
+(Please refer Section~\ref{Sec_Fife_Retire_DMem}.)
+
+Inside \verb|rl_Retire_EX_DMem| we invoke ``\verb|fa_update_rd()|''
+always, but we invoke ``\verb|f_retire_store_buf()|'' only when there
+was no exception.  Justify this.
+
+% ================================================================
+
+\subsection*{Ex-16-H: Retiring Deferred DMem}
+\label{Ex-16-H-Retiring Deferred DMem}
+
+(Please refer Section~\ref{Sec_Fife_Retire_DMem_deferred}.)
+
+This rule fields a memory response, but does not send any
+commit/discard message to the store-buffer.  Why not?
 
 % ****************************************************************
 
