@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_Dispatch;
 
@@ -74,7 +74,6 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 				       inum:    x.xtra.inum,
 				       rs2_val: rs2_val}            // \eelide
 				    };
-
       // ----------------
       // Info for EX_Control
       let to_EX_Control = RR_to_EX_Control {pc:           x.pc,
@@ -98,7 +97,6 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 				inum:    x.xtra.inum,
 				pc:      x.pc}                       // \eelide
 			     };
-
       // ----------------
       // Info for Execute DMem pipe
       Bit #(XLEN)  eaddr    = rs1_val + x.imm;
@@ -120,7 +118,6 @@ function ActionValue #(Result_Dispatch)                        // \blatex{fn_Dis
 				   pc:       x.pc,
 				   instr:    x.instr}                 // \eelide
 				};
-
       // ----------------
       // Construct and return final result
       let result = Result_Dispatch {to_Retire:     to_Retire,

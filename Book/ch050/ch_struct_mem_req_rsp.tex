@@ -43,7 +43,7 @@ Figure~\ref{Fig_Instr_Exec} with struct types communicated on each of
 the black arrows between stages, and each of the red arrows to and
 from memory.  In this and the next few chapters we will flesh out the
 details of all these struct types.  We will use exactly the same
-struct types for Fife and Drum, {\ie} whether the implementation is
+struct types for {\FIFE} and {\DRUM}, {\ie} whether the implementation is
 pipelined or not.  All these \verb|struct| declarations can be found
 in the file: \verb|src_Common/Inter_Stage.bsv|.
 
@@ -135,7 +135,8 @@ including structs, arrays, arrays of structs, and so on.
 \vspace{2ex}
 % ----------------
 
-The repetition of \verb|Mem_Req| above seems verbose.  The \emph{bsc}
+The repetition of the word \verb|Mem_Req| on both the left-hand and
+right-hand sides of the ``{\tt =}'' seems verbose.  The \emph{bsc}
 compiler's type-analysis is easily able to infer the type from the
 right-hand side, so we can just use the keyword ``\verb|let|'' ({\tt
 let}-bindings are discussed in Section~\ref{Sec_let_binding}):
@@ -333,28 +334,32 @@ and the individual fields.
 
 \label{Sec_Mem_Req_Type}
 
-A memory-request in RV32I is either a LOAD, a STORE or a FENCE.  We
-could define an enum type for this:
+A memory-request in RV32I is either a FETCH, a LOAD, a STORE, a FENCE,
+or a FENCE.I.\footnote{A FETCH is just a LOAD, but it is useful to
+distinguish this for debuggin.}  We could define an enum type for
+this:
 
 {\footnotesize
 \begin{Verbatim}[frame=single, numbers=left]
-typedef enum {MEM_REQ_LOAD,
-              MEM_REQ_STORE
-              MEM_REQ_FENCE} Mem_Req_Type
+typedef enum {MEM_REQ_FETCH,
+              MEM_REQ_LOAD,
+              MEM_REQ_STORE,
+              MEM_REQ_FENCE,
+              MEM_REQ_FENCE_I} Mem_Req_Type
 deriving (Bits, FShow, Eq);
 \end{Verbatim}
 }
 
 which will use a 2-bit encoding (0 for LOAD, 1 for STORE, 2 for
-FENCE).  However, we look to the future where we might extend Drum and
-Fife to implement the ``A'' extension (for AMO or ``Atomic Memory
-Operations'').  The RISC-V ISA Unprivileged Spec document, Chapter 8,
-describes additional memory operations LR (Load-Reserved), SC
-(Store-Conditional), AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR, AMOMIN,
-AMOMAX, AMOMINU, and AMOMAXU, each of which comes in a 32-bit version
-(in RV32 and RV64) and a 64-bit version (in RV64).  These operations
-are coded with 5 bits in the instruction (\verb|instr[31:27]|, which
-we call ``{\tt funct5}'').
+FENCE).  However, we look to the future where we might extend {\FIFE}
+and {\DRUM} to implement the ``A'' extension (for AMO or ``Atomic
+Memory Operations'').  The RISC-V ISA Unprivileged Spec document,
+Chapter 8, describes additional memory operations LR (Load-Reserved),
+SC (Store-Conditional), AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
+AMOMIN, AMOMAX, AMOMINU, and AMOMAXU, each of which comes in a 32-bit
+version (in RV32 and RV64) and a 64-bit version (in RV64).  These
+operations are coded with 5 bits in the instruction
+(\verb|instr[31:27]|, which we call ``{\tt funct5}'').
 
 Accordingly, we use a 5-bit encoding for the memory request type.
 When we implement the A extension, we will directly use the 5-bit
@@ -369,11 +374,11 @@ codes that are unused in the A extension:
 
 \label{Sec_Mem_Req_Size}
 
-An IMem request is for one 32-bit instruction (4 bytes).\footnote{When
-implementing the ``C'' RISC-V ISA extension (compressed instructions),
-instructions can also be 16-bits (2 bytes).  When implementing more
-sophisticated Fetch units, we may actually fetch chunks larger than 4
-bytes, such as a full cache line.}
+An IMem request (FETCH) is for one 32-bit instruction (4
+bytes).\footnote{When implementing the {\bf C} RISC-V ISA extension
+(compressed instructions), instructions can also be 16 bits (2 bytes).
+When implementing more sophisticated Fetch units, we may actually
+fetch chunks larger than 4 bytes, such as a full cache line.}
 
 An RV32I DMem request may be for 1, 2 or 4 bytes.  Looking to the
 future, accesses may also be for 8 bytes (doublewords in RV64I, and/or
@@ -513,7 +518,7 @@ programs never over-write instructions in memory.  This allows
 separate hardware for memory access for instructions {\vs} memory
 access for data, which can run concurrently, {\ie} we may fetch an
 instruction at the same time as we are accessing data memory for a
-previous load/store instruction (we will see this in Fife).  We can
+previous load/store instruction (we will see this in {\FIFE}).  We can
 also tune and optimize each memory path separately for their different
 dynamic behavioral patterns.  In some systems we can also
 \emph{protect} the instruction memory area, {\ie} enforce in hardware

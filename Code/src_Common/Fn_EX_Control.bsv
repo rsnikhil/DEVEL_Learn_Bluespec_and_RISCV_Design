@@ -82,8 +82,8 @@ function ActionValue #(EX_Control_to_Retire)                // \blatex{fn_EX_Con
       else begin                                                                // \belide{6}
 	 wr_log2 (flog, $format ("IMPOSSIBLE: fn_EX_Control", fshow (x)));
 	 $finish (1);
-      end                                                                       // \eelide
-
+      end
+                                                                                // \eelide
       let y = EX_Control_to_Retire {exception:  exception,
 				    cause:      cause_INSTRUCTION_ADDRESS_MISALIGNED,
 				    tval:       next_pc,

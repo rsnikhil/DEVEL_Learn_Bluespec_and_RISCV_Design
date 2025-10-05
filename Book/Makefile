@@ -97,15 +97,19 @@ o: $(SOURCES)
 	pdflatex  One_Chapter.tex
 
 # ================================================================
-# Create png figs from svg; extract code excerpts
+# Create png figs from svg
 
 .PHONY: figs
 figs:
 	make -C Figures png
 
+# ================================================================
+# Extract code excerpts
+
 .PHONY: extract
 extract:
-	./Code_Extracts/Extract_latex_from_BSV.py  $(CODE_DIR)  Code_Extracts
+	mkdir -p Code_Extracts
+	./Extract_latex_from_BSV.py  $(CODE_DIR)  Code_Extracts
 
 # ================================================================
 

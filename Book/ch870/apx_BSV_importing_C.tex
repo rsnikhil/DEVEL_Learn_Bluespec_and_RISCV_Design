@@ -25,7 +25,7 @@ Section\ref{apx_HLS}) and it is principally used in \emph{testbenches}
 for designs.
 
 There are many reasons to import C functions into BSV (whether
-simulating in Bluesim or in Verilog simulation):
+simulating in {\BLUESIM} or in Verilog simulation):
 
 \begin{itemize}
 
@@ -124,7 +124,7 @@ wide:
 
 \section{Compile the BSV code with the \emph{bsc} compiler}
 
-If you are compiling for Bluesim, there is no change to how you invoke
+If you are compiling for {\BLUESIM}, there is no change to how you invoke
 \emph{bsc}.
 
 If you are compiling to Verilog, provide the additional flag
@@ -136,7 +136,7 @@ Verilog.
 
 \section{Linking}
 
-For Bluesim linking, simply provide the C file(s) implementing
+For {\BLUESIM} linking, simply provide the C file(s) implementing
 imported C functions as an additional command-line arguments when you
 again invoke \emph{bsc} for linking.
 

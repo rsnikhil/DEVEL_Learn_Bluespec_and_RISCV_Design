@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_Fetch;
 
@@ -33,11 +33,10 @@ deriving (Bits, FShow);                         // \elatex{Result_F}
 function ActionValue #(Result_F)                                     // \blatex{fn_Fetch}
          fn_Fetch (Bit #(XLEN)  pc,
 		   Bit #(XLEN)  predicted_pc,    // \belide{19}
-		   Epoch        epoch,           // \eelide
+		   Epoch        epoch,
 		   Bit #(64)    inum,
 		   Bit #(64)    arch_inum,
-		   File         flog);           // \belide{19}
-                                                 // \eelide
+		   File         flog);           // \eelide
    actionvalue
       Result_F y = ?;
       // Info to next stage
@@ -48,7 +47,9 @@ function ActionValue #(Result_F)                                     // \blatex{
 
 				xtra: Fetch_to_Decode_Xtra {
 				   inum: inum
-			       }};                                    // \eelide
+			        }                                     // \eelide
+	                       };                                    
+
       // Request to IMem
       y.mem_req = Mem_Req {req_type: funct5_FETCH,
 			   size:     MEM_4B,

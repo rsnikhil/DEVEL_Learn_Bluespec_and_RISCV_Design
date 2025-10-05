@@ -49,13 +49,13 @@ typedef enum {OPCLASS_SYSTEM,     // EBREAK, ECALL, CSRRxx
 OpClass
 deriving (Bits, Eq, FShow);                                     // \elatex{OpClass}
 
-typedef struct {
-   Bit #(XLEN)  pc;                                           // \blatex{Decode_to_RR}
-                                                                 // \belide
+typedef struct {                                                // \blatex{Decode_to_RR}
+   Bit #(XLEN)  pc;
+                                                                  // \belide
    Bit #(XLEN)  predicted_pc;     // For branch-prediction only
    Epoch        epoch;            // For branch-prediction only
-   Bool         halt_sentinel;    // Debugger support            // \eelide
-
+   Bool         halt_sentinel;    // Debugger support
+                                                                  // \eelide
    // If exception
    Bool         exception;  // Fetch exception/ decode illegal instr
    Bit #(4)     cause;
@@ -70,10 +70,10 @@ typedef struct {
    Bool         has_rd;
    Bool         writes_mem;   // All mem ops other than LOAD
    Bit #(XLEN)  imm;          // Canonical (bit-swizzled)
-                                                                // \belide
-   Decode_to_RR_Xtra  xtra;                                     // \eelide
+                                                                  // \belide
+   Decode_to_RR_Xtra  xtra;                                       // \eelide
 } Decode_to_RR
-deriving (Bits, FShow);                                       // \elatex{Decode_to_RR}
+deriving (Bits, FShow);                                         // \elatex{Decode_to_RR}
 
 // ================================================================
 // Register Read => Retire Direct

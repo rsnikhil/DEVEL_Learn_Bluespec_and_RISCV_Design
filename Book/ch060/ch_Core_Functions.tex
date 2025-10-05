@@ -2,7 +2,7 @@
 
 % ****************************************************************
 
-\chapter{RISC-V: Core functions for ISA execution (used in Drum and Fife)}
+\chapter{RISC-V: Core functions for ISA execution (used in {\DRUM} and {\FIFE})}
 
 \markboth{Ch \arabic{chapter}: RISC-V: Core functions}{\copyrightnotice}
 
@@ -42,26 +42,60 @@ as the address in a memory-request to IMem.  It has two outputs,
 
 \begin{tightlist}
 
- \item A \emph{memory request} to memory, to read an instruction.  We
-       have already seen the definitition of the \verb|Mem_Req| struct
-       in Section~\ref{Sec_Mem_Req}.
+ \item A \emph{memory request} to memory, to read an instruction.
 
  \item Some additional information ``\verb|Fetch_to_Decode|'' passed
        on to the Decode stage.
 
 \end{tightlist}
 
+We discussed the \verb|Mem_Req| struct in Section~\ref{Sec_Mem_Req}.
+
 The ``\verb|Fetch_to_Decode|'' struct has only one interesting field,
 the PC:
 
 \SHOWCODE{Code_Extracts/Fetch_to_Decode.tex}
 
-The field \verb|inum| holds the ``instruction number'', which is a
-sequence number counting every instruction fetched.  It is used only
-for debugging, to be able to identify a specific fetched instruction.
-(In the source code you will see two more fields \verb|predicted_pc|
-and \verb|epoch|; ignore these for now, they are not used in Drum,
-only in Fife.)
+% ----------------
+\vspace{2ex}
+
+NOTE: \fbox{\footnotesize
+\begin{minipage}{5.25in}
+
+In the source code you will see that this struct defines some
+additional fields: {\tt predicted\_pc}, {\tt epoch} and {\tt
+halt\_sentinel}.  Please ignore these for now; the first two are not
+used in {\DRUM}, only in {\FIFE}, and the latter is used only if we
+have hardware debugger support.
+
+\vspace{1ex}
+
+In the source code you will also see an additional field: {\tt xtra},
+of type {\tt Fetch\_to\_Decode\_Xtra}.  This, too, can be ignored for
+now.  For many a struct of type $X$ we carry some additional
+information in a field of type $X${\tt{}\_Xtra}, that is \emph{only}
+used for debugging and otherwise are not necessary in a production
+implementation.  To avoid visual clutter in the production code, we
+choose to define these in a separate file that is inserted into this
+file (see {\tt `include "Inter\_Stage\_Xtra.bsvi"}) near the top of
+this file).  This is just a stylistic choice; all the fields could
+have been defined directly within the {\tt Fetch\_to\_Decode} struct.
+Also, in a production design, we can easily remove these additional
+fields to eliminate the wires and registers that they occupy.
+
+\vspace{1ex}
+
+In this case, the type {\tt Fetch\_to\_Decode\_Xtra} is a struct with
+one field, {\tt inum}, that holds the ``instruction number'', which is
+a sequence number counting every instruction fetched.  In {\DRUM} this
+number is exactly the number of insructions executed.  In {\FIFE} this
+number will be larger because some instructions are fetched
+speculatively and discarded (note executed).
+
+\end{minipage}}
+
+\vspace{2ex}
+% ----------------
 
 \index[BSV]{struct!nested}
 
@@ -81,11 +115,11 @@ actually a pure function (no side-effects), and we could have written
 it as follows:
 
 {\footnotesize
-\begin{Verbatim}[frame=single, numbers=left]
+\begin{Verbatim}[frame=single]
 function Result_F
          fn_Fetch (Bit #(XLEN)  pc,
 		   ...
-		   Bit #(64)    inum);
+		  );
       Result_F y = ?;
       ...
       return y;
@@ -104,15 +138,12 @@ function, by couching it as an \verb|ActionValue| type, we preserve
 the option of inserting a \verb|$display| (which \emph{is} a
 side-effect) for debugging purposes, should we need it in the future.
 
-In line 9 we declare variable \verb|y| of type \verb|Result_F|, with
+In line 5 we declare variable \verb|y| of type \verb|Result_F|, with
 unspecified initial value (recall Section~\ref{Sec_Dont_Care_Values}
 where we discussed using ``\verb|?|'' to indicate an unspecified or
 don't-care value).  The two fields of \verb|y| are then updated in
-lines 11 and 14, respectively, and \verb|y| is finally returned as the
+lines 8 and 13, respectively, and \verb|y| is finally returned as the
 result of the function.
-
-We also use ``\verb|?|'' in line 17 as the \verb|data| field is only
-relevant in a STORE memory request, whereas this is a FETCH request.
 
 % ----------------------------------------------------------------
 
@@ -143,7 +174,7 @@ addresses that are offset from the current PC.  It will also be needed
 for any traps (exceptions) that may occur in the execution of this
 instruction, since trap-handling saves the PC in the {\tt mepc} CSR.
 
-The \verb|exception| flag indicates:
+The boolean \verb|exception| flag indicates:
 
 \begin{itemize}
 
@@ -199,7 +230,7 @@ and communicate the results forward.
       rd register.  This will control writing to the register file.
 
 \item The \verb|writes_mem| field indicates whether or not this
-      instruction writes to memory.  This is useful in Fife in the
+      instruction writes to memory.  This is useful in {\FIFE} in the
       Retire stage to know whether or not there may be a pending write
       to memory that needs to be committed.
 
@@ -238,10 +269,10 @@ from the instruction.  In line 9 we compute the fall-through PC, PC+4
 ``C'' RISC-V ISA extension (``Compressed'' instructions), it may be
 PC+2, which information can be gleaned from the instruction encoding).
 
-In lines 11-26 we create a baseline \verb|Decode_to_RR| value which we
+In lines 11-31 we create a baseline \verb|Decode_to_RR| value which we
 will selectively modify in the if-then-else statements that follow.
 
-In lines 31-40 we first handle the sitations where the Fetch operation
+In lines 35-44 we first handle the sitations where the Fetch operation
 to memory itself returned an error.  We mark the \verb|exception|
 field True and fill in the appropriate \verb|cause| and \verb|tval|
 (these will be placed in MCAUSE and MTVAL CSRs in the Retire stage).
@@ -301,10 +332,10 @@ each output wire as a function of the input wires.
 \index[RV]{fn\_Dispatch@{\tt fn\_Dispatch} (Dispatch function)}
 \index[RV]{Dispatch function ({\tt fn\_Dispatch})}
 
-In the Register-Read and Dispatch stage (``RR'', ``RRD''), we first
-read the \verb|rs1| and \verb|rs2| values from the Register File.  We
-will cover register files in Section~\ref{Sec_Register_files}, and
-register-reads when we discuss the Drum CPU itself, in
+In the Register-Read and Dispatch stage (``RR''), we first read the
+\verb|rs1| and \verb|rs2| values from the Register File.  We will
+cover register files in Section~\ref{Sec_Register_files}, and
+register-reads when we discuss the {\DRUM} CPU itself, in
 Chapter~\ref{ch_Drum_code}.
 
 With the \verb|rs1| and \verb|rs2| values in hand, we use function
@@ -322,14 +353,14 @@ subsequent flows:
         \emph{tag} that indicates which of the four flows is being
         followed for the current instruction.
 
-        Additional direct information includes information from RR
-        (PC, whether an exception has already been seen in the Fetch
-        or Decode stages, \verb|has_rd|, \verb|writes_mem|, the
+        Additional direct information includes information from RR:
+        PC, whether an exception has already been seen in the Fetch or
+        Decode stages, \verb|has_rd|, \verb|writes_mem|, the
         instruction, the fall-through PC and the \verb|rs1| value
         (needed for CSRRx instructions).
 
-       The direct flow is also used for all SYSTEM instructions,
-       including CSRRxx, ECALL, EBREAK, and MRET.
+        The direct flow is also used for all SYSTEM instructions,
+        including CSRRxx, ECALL, EBREAK, and MRET.
 
   \item ``Control'': If the instruction is a BRANCH, JAL or JALR, we
         produce information for the Execute Control flow.
@@ -386,11 +417,11 @@ Section~\ref{Sec_fn_EX_Int} when we discuss \verb|fn_EX_Int|):
 \SHOWCODE{Code_Extracts/RR_to_EX.tex}
 
 We choose to call it \verb|RR_to_EX| instead of \verb|RR_to_EX_Int|
-because the same struct type is likely to be used in future also for
-the other optional execution pipes shown in
-Figure~\ref{Fig_Core_Simple_Instr_Exec}: Integer Multiply Divide
-(``M'' ISA extension), floating point (``F'' and ``D'' ISA extensions)
-and Custom (non-standard ISA extensions).
+because the same struct type is likely also to be used in future for
+the other optional execution pipes between the Dispatch and Retire
+stages: Integer Multiply Divide ({\bf M} ISA extension), floating
+point ({\bf F,D} ISA extensions) and Custom (non-standard ISA
+extensions).
 
 The third component of \verb|Result_Dispatch| is the information sent
 to Execute DMem, and is the same \verb|Mem_Req| struct we have already
@@ -405,13 +436,13 @@ source registers \verb|rs1| and \verb|rs2|.
 
 Lines 7-14 compute \verb|exec_tag|, {\ie} the flow to be followed.
 
-Lines 16-29, 33-38, 42-46 and 49-61 construct the flow-specific struct
+Lines 16-31, 34-41, 44-49 and 51-66 construct the flow-specific struct
 values.  The latter three are meaningful only if \verb|exec_tag|
 indicates Control, Integer of DMem, respectively, but there is no harm
 in constructing them, even if they may contain bogus data; they will
 only be used when their flows are chosen and ignored otherwise.
 
-Lines 64-68 construct and return the final result with the four
+Lines 68-73 construct and return the final result with the four
 component structs.
 
 % ----------------------------------------------------------------
@@ -450,10 +481,10 @@ that for BLT and BGE, we use BSV library functions \verb|signedLT| and
 \verb|signedGE| that interpret \verb|rs1_val| and \verb|rs2_val| as
 2's-complement signed integers.
 
-Line 16 computes the target PC should the the branch be taken.  Line
-17 computes the next PC, which is either the target PC or the
+Line 21 computes the target PC should the the branch be taken.  The
+next line computes the next PC, which is either the target PC or the
 fall-through PC depending on whether or not the branch is taken.
-Finally, Line 18 checks, if the branch is taken, that the target PC is
+Finally, the next line checks, if the branch is taken, that the target PC is
 a properly aligned address (if not, we must raise an exception).
 
 The next ``\verb|else if|'' clause handles JAL (Jump and Link)
@@ -488,11 +519,10 @@ shown below:
 \SHOWCODE{Code_Extracts/EX_to_Retire.tex}
 
 We choose to call it \verb|EX_to_Retire| instead of
-\verb|EX_Int_to_Retire| because the same struct type is likely to be
-used in future also for the other optional execution pipes shown in
-Figure~\ref{Fig_Core_Simple_Instr_Exec}: Integer Multiply Divide
-(``M'' ISA extension), floating point (``F'' and ``D'' ISA extensions)
-and Custom (non-standard ISA extensions).
+\verb|EX_Int_to_Retire| because the same struct type is likely also to
+be used in future for other optional execution pipes Integer Multiply
+Divide ({\bf M} ISA extension), floating point ({\bf F,D} ISA
+extensions) and Custom (non-standard ISA extensions).
 
 Here is the Execute Integer function:
 
@@ -508,7 +538,7 @@ handles all the remaining Integer ops by invoking an ``ALU'' function:
 The reason we create a separate \verb|fn_IALU| function, instead of
 inlining it into \verb|Fn_EX_Int| is because \verb|fn_IALU| is not
 very RISC-V specific, and may be useful in other contexts that have
-nothing to do with RISC-V, Drum or FIfe.
+nothing to do with RISC-V, {\DRUM} or {\FIFE}.
 
 In lines 11-13, we define signed-integer versions {\tt iv1}, {\tt iv2}
 and \verb|i_imm| of the unsigned integer values {\tt v1}, {\tt v2},
@@ -516,18 +546,18 @@ and {\tt imm}, respectively, using the standard BSV \verb|unpack|
 function.  There is no hardware cost to this, these declarations are
 simply declarations to ``view'' the same bits differently (as
 2's-complement coded integers).  The difference arises later, when we
-apply certain operators to these values.  For example, lines 24-25
-compute the SLT (Set Less Than (signed)) and SLTU (Set Less Than
-Unsigned) operations.  SLT uses the signed values {\tt iv1} and {\tt
-iv2}, whereas SLTU uses the unsigned values {\tt v1} and {\v2}.
-Between the \emph{bsc} compiler and the Verilog back-end, different
-code will be generated for the ``{\tt <}'' operator to perform the
-correct kind of comparison.
+apply certain operators to these values.  For example, the line
+computing SLT (Set Less Than (signed)) uses the signed values {\tt
+iv1} and {\tt iv2} whereas the line computing SLTU (Set Less Than
+Unsigned) uses the unsigned values {\tt v1} and {\tt v2}.  Between the
+\emph{bsc} compiler and the Verilog back-end, different code will be
+generated for the ``{\tt <}'' operator to perform the correct kind of
+comparison.
 
-Line 18 extracts a 5-bit ``shift amount'' from the {\tt rs2} value for
-the shift operators SLL, SRL and SRA.  Line 39 extract a 5-bit ``shift
-amount'' from the {\tt imm} value for the shift operators SLLI, SRLI
-and SRAI.
+Line 18 extracts a 5-bit (for RV32) or 6-bit (for RV64) ``shift
+amount'' from the {\tt rs2} value for the shift operators SLL, SRL and
+SRA.  Line 41 extracts the ``shift amount'' from the {\tt imm} value
+for the shift operators SLLI, SRLI and SRAI.
 
 SRL (Shift Right Logical) and SRA (Shift Right Arithmetic) differ in
 whether they treat the argument as a signed or unsigned value, the
@@ -535,27 +565,27 @@ difference being whether the new bits shifted into the
 most-significant bit are zero (SRL) or replicate the most-significant
 bit (SRA).  SRLI and SRAI exhibit a similar difference.
 
-In lines 28 (SRA) and 49 (SRAI) we finally apply the ``{\tt pack}''
+In lines 30 (SRA) and 53 (SRAI) we finally apply the ``{\tt pack}''
 operator to produce the result. This is because the expression
 ``\verb|(iv1 >> shamt)|'' has type {\tt Int\#(XLEN)} whereas the
 result needs to be of type {\tt Bit\#(XLEN)}.  The ``{\tt pack}''
 operator performs this type-change for us.
 
-Lines 19-32 define the \verb|y_OP| result when the opcode is
+Lines 15-36 define the \verb|y_OP| result when the opcode is
 \verb|opcode_OP| {\ie} {\tt 7'b\_011\_0011}, {\ie} the ``3-address''
 operators where the inputs come from {\tt rs1} and {\tt rs2}.
 \verb|y_OP| defaults to 0 when it is not an {\tt op\_OP}.
 
-Lines 40-49 define the \verb|y_OP_IMM| result when the opcode is {\tt
+Lines 38-57 define the \verb|y_OP_IMM| result when the opcode is {\tt
 opcode\_OP\_IMM} {\ie} {\tt 7'b\_001\_0011}, {\ie} the ``2-address''
 operators where one input come from {\tt rs1} and the other input
 comes from an immediate value in the instruction.  \verb|y_OP_IMM|
 defaults to 0 when it is not an \verb|op_OP_IMM|.
 
-Finally, line 45 combines these results using the ``OR'' function.  We
+Finally, line 59 combines these results using the ``OR'' function.  We
 rely on the fact that exactly one of \verb|y_OP| and \verb|y_OP_IMM|
 can be relevant; the other one must be zero (and therefore has no
-effect through the OR'ing).
+effect through OR'ing).
 
 % ----------------------------------------------------------------
 
@@ -563,7 +593,7 @@ effect through the OR'ing).
 
 % ****************************************************************
 
-\section{No separate functions for Execute DMem and Retire}
+\section{No shared functions for Execute DMem and Retire}
 
 We don't need any separate functions for the Execute DMem stage in
 Figure~\ref{Fig_Core_Simple_Instr_Exec} because \verb|fn_Dispatch| has
@@ -571,9 +601,9 @@ created a \verb|Mem_Req| struct that we can send directly to memory.
 Similarly, the memory returns a \verb|Mem_Rsp| that is sent directly
 to the Retire stage.
 
-The code for the Retire stage is discussed in detail separatly in
-Chapter~\ref{ch_Drum_code} for Drum and Chapter~\ref{ch_Fife_code} for
-Fife.  Although functionally the same, the codes are structurally
+The code for the Retire stage is discussed in detail separately in
+Chapter~\ref{ch_Drum_code} for {\DRUM} and Chapter~\ref{ch_Fife_code} for
+{\FIFE}.  Although functionally the same, the codes are structurally
 sufficiently different that it is not worth attempting to abstract any
 common functionality into a shared function.
 

@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Fn_Decode;
 
@@ -42,19 +42,19 @@ function ActionValue #(Decode_to_RR)         // \blatex{fn_Decode}
 			    halt_sentinel: False,
                                                                      // \eelide
 			    // exception
-			    exception:    False,
-			    cause:        ?,
-			    tval:         0,
+			    exception:     False,
+			    cause:         ?,
+			    tval:          0,
 
 			    // not-exception
-			    fallthru_pc:  fallthru_pc,
-			    instr:        instr,
-			    opclass:      ?,
-			    has_rs1:      False,
-			    has_rs2:      False,
-			    has_rd:       False,
-			    writes_mem:   False,
-			    imm:          0,
+			    fallthru_pc:   fallthru_pc,
+			    instr:         instr,
+			    opclass:       ?,
+			    has_rs1:       False,
+			    has_rs2:       False,
+			    has_rd:        False,
+			    writes_mem:    False,
+			    imm:           0,
 
 			    xtra: Decode_to_RR_Xtra {
 			       inum: x_F_to_D.xtra.inum

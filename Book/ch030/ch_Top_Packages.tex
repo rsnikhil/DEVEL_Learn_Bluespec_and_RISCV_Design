@@ -106,8 +106,8 @@ long as it is supplied power and a clock signal.
 \vspace{1ex}
 % ----------------
 
-We can simulate in {\Bluesim} or in Verilog simulation; in both cases it
-just prints ``Hello World!'' and exits.  For {\Bluesim}, we can compile
+We can simulate in {\BLUESIM} or in Verilog simulation; in both cases it
+just prints ``Hello World!'' and exits.  For {\BLUESIM}, we can compile
 and link it using the free and open-source \emph{bsc} compiler, and
 then run the executable:
 
@@ -134,14 +134,14 @@ compiler, and then run the executable:
 \end{Verbatim}
 }
 
-In both the {\Bluesim} and {\Verilator} cases, the ``\verb|-g|'' flag tells
+In both the {\BLUESIM} and {\Verilator} cases, the ``\verb|-g|'' flag tells
 \emph{bsc} the name of the top-level module for which to generate
 code, ``\verb|-e|'' tells it which is the top-level module for
 simulation, and ``\verb|-e|'' tells it the desired name for the final
 executable.
 
-In {\Bluesim} compile-link, ``\verb|-sim|'' tells \emph{bsim} that our
-target is {\Bluesim}.
+In {\BLUESIM} compile-link, ``\verb|-sim|'' tells \emph{bsim} that our
+target is {\BLUESIM}.
 
 In Verilog compile-link, ``\verb|-verilog|'' tells \emph{bsim} to
 generate Verilog, and it produces the Verilog file \verb|mkTop.v|.
@@ -348,7 +348,7 @@ defined in that package.  In the rule, we have added two more
 \verb|$display()| statements to print values from the \verb|DUT|
 package.
 
-We can compile and link it for {\Bluesim} using the \emph{bsc} compiler,
+We can compile and link it for {\BLUESIM} using the \emph{bsc} compiler,
 and then run the executable:
 
 {\footnotesize
@@ -721,7 +721,7 @@ In the rule, we invoke \verb|dut|'s methods and, using a
 \verb|authors|, ... {\etc} to the tuple components. The \verb|match|
 statement is described in more detail in Section~\ref{Sec_Tuples}
 
-We can compile and link it for {\Bluesim} and {\Verilator} as before;
+We can compile and link it for {\BLUESIM} and {\Verilator} as before;
 running it produces the same outputs as before.
 
 % ----------------------------------------------------------------
@@ -887,7 +887,7 @@ instantiated more than once, $MI_{j\,a}$, $MI_{j\,b}$, $MI_{j\,c}$,
 \verb|mkReg| (register) and \verb|mkFIFOF| (FIFO) modules may be
 instantiated dozens of times, in dozens of modules.
 
-In simulation ({\Bluesim} or Verilog simulation), this static elaboration
+In simulation ({\BLUESIM} or Verilog simulation), this static elaboration
 is performed once, at the start of the simulation.
 
 When synthesizing to FPGA or ASIC, this static elaboration is

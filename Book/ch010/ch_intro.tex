@@ -44,18 +44,20 @@ for that matter) without actually practising writing, running and
 testing programs.  For this, we need interesting examples; what better
 example than designing a CPU?
 
-In this book we learn how to design two RISC-V CPUs, \emph{Drum} and
-\emph{Fife}, both of which can execute exactly the same RISC-V
+In this book we learn how to design two RISC-V CPUs, {\DRUM} and
+{\FIFE}, both of which can execute exactly the same RISC-V
 binaries ({\ie} RISC-V machine code produced from C programs (for
 example) by the \emph{riscv-gcc} compiler (or other RISC-V compilers).
 
-Drum is the simpler CPU. Because it is not pipelined; by designing
+{\DRUM} is the simpler CPU, because it is not pipelined.  By designing
 this first, we can master all the nuances of RISC-V
 \emph{functionality} without being distracted by complexities due to
-pipelining.  Then we move on to Fife, where we can focus exclusively
-on the complexities due to pipelining.  This is facilitated by the
-fact that \emph{Fife reuses most of the RISC-V functional code
-developed for Drum}.
+pipelining.  Then we move on to {\FIFE}, where we can focus
+exclusively on the complexities due to pipelining.  This is
+facilitated by the fact that {\FIFE} \emph{reuses most of the RISC-V
+functional code developed for} {\DRUM}\footnote{We are unaware of any
+other designs where ISA functionality {\vs} pipelining are
+factored in this way.}.
 
 Both designs are coded in the {\BSV} High-Level HDL (HL-HDL).  We
 interleave topics from {\BSV} and CPU-design so that {\BSV} can be learned
@@ -83,9 +85,9 @@ contain suggestions for further study.
 
 \section{The plan, in more detail}
 
-Figure~\ref{Fig_Topics} shows the broad range of topics that CPU
-designer needs to know.  In this book we will touch on all the red
-topics.
+Figure~\ref{Fig_Topics} shows the broad range of topics that any CPU
+designer needs to know.  In this book we will touch on all the
+topics shown in red text.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=\textwidth]{Fig_Topics}}
   \caption{\label{Fig_Topics}Topics covered in this book (in red text in red box)}
@@ -120,8 +122,7 @@ wrong.
 
 \vspace{1ex}
 
-\emph{In this book we do not discuss how to install and use these
-tools}.
+\emph{In this book we do not discuss how to install and use compilation tools}.
 
 \end{minipage}}
 
@@ -129,14 +130,13 @@ tools}.
 
 % ----------------
 
-Most of the book is focused on designing and verifying Drum and Fife.
+Most of the book is focused on designing and verifying {\DRUM} and {\FIFE}.
 
 We code our designs in {\BSV}.  We use {\BSV} for CPU itself, and for
 the top-level testbench.  For simulation, the supporting ``system''
-components---a Memory, UART and GPIO---are written in C and linked
-into a simulation executable.  For running on FPGA the supporting
-system components use some additional existing hardware
-infrastructure.
+components---a Memory, UART and GPIO---are mostly written in C and
+linked into a simulation executable.  For running on FPGA, however,
+the system components need to be written in an HDL.
 
 We can simulate the CPU and supporting system on our
 laptop/workstation in two ways:
@@ -144,7 +144,7 @@ laptop/workstation in two ways:
 \begin{enumerate}
 
  \item We use the \emph{bsc} compiler to compile {\BSV} code directly
-       into a so-called {\Bluesim} simulation executable.
+       into a so-called {\BLUESIM} simulation executable.
 
  \item We use the \emph{bsc} compiler to translate {\BSV} code into
        Verilog RTL, and then we use the {\Verilator} tool to compile
@@ -162,15 +162,18 @@ for debugging the hardware design because the turnaround time to fix a
 problem and run a new simulation is very short (minutes) compared to
 creating a new version for an FPGA (several hours).
 
-Of course, Verilog simulation runs much more slowly (10,000x or
-slower) compared to an FPGA, and so simulation is useful primarily for
-early debugging and analysis of the design while running small RISC-V
-programs.
+Of course, simulation ({\BLUESIM} or Verilog) runs much more slowly
+(by a factor 10,000 times or slower) compared to running on an FPGA,
+and so simulation is useful primarily for early debugging and analysis
+of the design while running small RISC-V programs.
 
 In Chapters~\ref{ch_BSV_verification}, \ref{ch_RISCV_verification},
 and \ref{ch_Optimization} we discuss debugging and optimization of our
 RISC-V designs, in particular using \emph{traces} that are generated
-during simulation.
+during simulation.  We will also discuss a semi-formal mechanism
+called {\PBT}, or Property-Based Testing, to verify the
+CPUs.\footnote{{\PBT} is the generic name for tools like Haskell's
+\emph{QuickCheck} (\url{https://en.wikipedia.org/wiki/QuickCheck}).}
 
 We will discuss how to process our Verilog RTL through an FPGA
 synthesis tool to create an FPGA bitfile which can then be loaded into
@@ -202,7 +205,7 @@ the book, and the interplay of {\BSV} and RISC-V topics.
 
 % ****************************************************************
 
-\section{Drum and Fife, our two implementations}
+\section{{\DRUM} and {\FIFE}, our two implementations}
 
 \label{Sec_Drum_and_Fife}
 
@@ -247,12 +250,13 @@ widely in microarchitecture.  Some design options are:
 
 For the same microarchitecture, a software simulator is typically
 \emph{much slower} than a hardware implementation (often by factors of
-tens of thousands).  This is because it involves (at least) two layers
-of simulation. The software simulator is itself a program that is
-being interpreted by the underlying workstation hardware.  That
-program (the simulator), in turn, is interpreting the target ISA.
-Every layer of interpretation can slow down overall performance by
-an order of magnitude or more.
+tens of thousands).  The first reason is because it involves (at
+least) two layers of simulation. The software simulator is itself a
+program that is being interpreted by the underlying workstation
+hardware.  That program (the simulator), in turn, is interpreting the
+target ISA.  Every layer of interpretation can slow down overall
+performance by an order of magnitude or more.  Secondly, simulators
+typically do not exploit the natural parallelism of hardware.
 
 Paradoxically, adding microarchitectural detail will normally slow
 down a software simulator but speed up a hardware implementation.
@@ -263,13 +267,13 @@ work in a software simulator.
 
 % ================================================================
 
-\subsection{ISA executed by Drum and Fife}
+\subsection{ISA executed by {\DRUM} and {\FIFE}}
 
-Drum and Fife execute exactly the same binaries; the only difference
-will be in Fife's superior performance (speed).
+{\DRUM} and {\FIFE} execute exactly the same binaries; the only difference
+will be in {\FIFE}'s superior performance (speed).
 
 As described in more detail in Chapter~\ref{ch_ISA}, the RISC-V ISA
-has many modular options.  For Drum and Fife, we limit our attention
+has many modular options.  For {\DRUM} and {\FIFE}, we limit our attention
 to a small subset:
 
 \begin{itemize}
@@ -309,9 +313,9 @@ Privileged Architecture''~\cite{RISCV_Priv_2021_12_03}.
 
 % ================================================================
 
-\subsection{Drum and Fife}
+\subsection{{\DRUM} and {\FIFE}}
 
-Drum and Fife are illustrated in
+{\DRUM} and {\FIFE} are illustrated in
 Figure~\ref{Fig_Two_Microarchitectures}.  Each instruction is taken
 through the same stages, shown.
 \begin{figure}[htbp]
@@ -320,34 +324,34 @@ through the same stages, shown.
   \caption{\label{Fig_Two_Microarchitectures}Two CPU implementations (microarchitectures)}
 \end{figure}
 
-Drum is a \emph{non-pipelined} implementation.  For each instruction,
+{\DRUM} is a \emph{non-pipelined} implementation.  For each instruction,
 the design is \emph{sequenced} through the stages shown in the
 diagram, using an FSM (Finite State Machine), completing all stages
 sequentially before starting on the next instruction.
 
-Drum is almost a direct transliteration into {\BSV} code of the generic
+{\DRUM} is almost a direct transliteration into {\BSV} code of the generic
 ISA execution algorithm described in
 Section~\ref{Sec_ISA_Exec_Algorithm}.  In fact the {\BSV} code will look
 very similar to C/C++ code for a purely functional RISC-V simulator.
 Being written in {\BSV}, however, we can compile and run it on actual
 hardware (FPGAs, ASICs).
        
-The design of Drum will familiarize us with all the basic RISC-V
+The design of {\DRUM} will familiarize us with all the basic RISC-V
 concepts and execution flows (the RISC-V ISA, preparing and running a
 RISC-V binary to run on the design, analysing traces), without being
 distracted by the complexities of pipelining.
 
-Drum is not fast compared to Fife or other hardware CPUs, because of
+{\DRUM} is not fast compared to {\FIFE} or other hardware CPUs, because of
 its lack of microarchitectural features, but we can still synthesize
 it to run at several 100 MHz on an FPGA, which makes it faster than
 most software functional simulators.  It will be small (silicon area,
 and therefore low power as well).
 
-Drum is covered in Chapter~\ref{ch_core_functions} through
+{\DRUM} is covered in Chapter~\ref{ch_core_functions} through
 Chapter~\ref{ch_Drum_code}.
 
-Fife is a 6+ stage pipelined design, which is a microarchitectural
-choice focused on higher performance (speed) than Drum.  All the
+{\FIFE} is a 6+ stage pipelined design, which is a microarchitectural
+choice focused on higher performance (speed) than {\DRUM}.  All the
 stages in the diagram run \emph{concurrently}, with each stage
 receiving input from the previous stage to its left (``upstream'') and
 producing output for the next stage to its right (``downstream'').
@@ -356,41 +360,59 @@ hazard management, concurrent execution pipelines, in-order retirement
 of instructions, and speculative stores to memory using a
 store-buffer.
 
-Fife is covered in Chapter~\ref{ch_Fife_Principles} through
+{\FIFE} is covered in Chapter~\ref{ch_Fife_Principles} through
 Chapter~\ref{ch_Fife_code}.
 
-Fife \emph{reuses} most of the RISC-V functional code from Drum
-without change.  Thus, Fife chapters can focus purely on the new
+{\FIFE} \emph{reuses} most of the RISC-V functional code from {\DRUM}
+without change.  Thus, {\FIFE} chapters can focus purely on the new
 issues raised by pipelining (and which are in fact applicable to any
 pipelined CPU design, not just RISC-V).
 
 At the end of the book, Chapter~\ref{ch_RISCV_further_study} discusses
-how to extend Drum and Fife to handle RV64I and more Unprivileged ISA
-options---M: integer multiply/divide, A: atomics, FD: single-and
-double-precision floating point, and C: compressed--- and more
-privileged ISA options---Privilege levels (M: Machine, S: Supervisor
-and U:User; full complement of Control and Status Registers (CSRs);
-Virtual Memory).  With these extensions, Drum and Fife will be able to
-run a full-feature Operating System (OS), such as Linux.
+how to extend {\DRUM} and {\FIFE} to handle RV64I and more
+Unprivileged ISA options---{\bf M}: integer multiply/divide, {\bf A}:
+atomics, {\bf F,D}: single-and double-precision floating point, and
+{\bf C}: compressed--- and more privileged ISA options---Privilege
+levels ({\bf M}: Machine, {\bf S}: Supervisor and {\bf U}:User; full
+complement of Control and Status Registers (CSRs); Virtual Memory).
+With these extensions, {\DRUM} and {\FIFE} will be able to run a
+full-feature Operating System (OS), such as Linux.
 
 % ================================================================
 
-\subsection{Drum and Fife source codes}
+\subsection{{\DRUM} and {\FIFE} source codes}
 
-The full source codes ({\BSV}) for Drum and Fife are included with this
+The full source codes ({\BSV}) for {\DRUM} and {\FIFE} are included with this
 book.  Excerpts of the actual code are taken, as-is, for inclusion in
 this book.  Excerpts look like this:
 
 \SHOWCODE{Code_Extracts/CPU_IFC.tex}
 
-The label on the top border of the box indicates file
+The label on the top border of the box indicates the file
 (\verb|src_Common/CPU_IFC.bsv|) from which this has been excerpted,
 and the starting line number (27) in the file.  The ``\verb|...|''
 indicates we have \emph{elided} some lines from the source file which
 are not directly relevant to the current discussion.
 
-We recommend, as you read the book, that you also keep open a text
-editor in which you can simultaneously view the actual sources.
+% ----------------
+\vspace{1ex}
+
+NOTE: \fbox{\small
+\begin{minipage}{5in}
+
+We strongly recommend, as you read the book, that you also keep
+open a text editor in which you can simultaneously view the actual
+sources.
+
+\end{minipage}}
+
+\vspace{1ex}
+% ----------------
+
+If a code excerpt in the book does \emph{not} contain a
+filename/line-number in the top border of the box, then it is not from
+the actual source code, it is just meant to illustrate some point in
+the text.
 
 % ****************************************************************
 
@@ -453,11 +475,11 @@ into low-level gates, wires, flip-flops, {\etc}.
 
 Accordingly, we will focus here on {\BSV} language-based hardware design,
 and skip the study of detailed low-level underlying circuits.  All our
-examples will be taken from Drum and Fife so that the motivation is
+examples will be taken from {\DRUM} and {\FIFE} so that the motivation is
 clear.
 
 In the next few sections, we cover the basic digital hardware concepts
-that are adequate to launch us into designing Drum and Fife with {\BSV}.
+that are adequate to launch us into designing {\DRUM} and {\FIFE} with {\BSV}.
 
 % ================================================================
 
