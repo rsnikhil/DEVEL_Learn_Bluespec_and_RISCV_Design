@@ -43,10 +43,10 @@ RISC-V CPUs.
 \index[BSV]{module!(persisitent) state}
 
 Modules encapsulate modifiable \emph{state}.  Examples include
-Registers, Register Files and FIFOs (all of which are discussed later
-in this chapter).  Modules with state are the only entities containing
-values that \emph{persist} over time, {\ie} a value ``written'' at one
-moment in time can be ``read'' at a later moment in time.
+Registers, Register Files and FIFOs (all of which will be discussed in
+this chapter).  Modules with state are the only entities containing
+values that \emph{persist} over time, {\ie} a value written at one
+moment in time can be read at a later moment in time.
 
 \index[BSV]{module!interface}
 
@@ -66,7 +66,8 @@ functionality (``external API''; \emph{what} a module does; a module
 
 {\BSV} modules are typically organized in a \emph{hierarchy}---a
 top-level module, which instantiates sub-modules which, in turn,
-instantiate lower-level modules, and so on. In Drum and Fife:
+instantiate lower-level modules, and so on. In {\DRUM} and {\FIFE}:
+
 \begin{tabbing}
 \hmm \= Top-level module \\
      \> \hmm \= CPU module \\
@@ -74,7 +75,7 @@ instantiate lower-level modules, and so on. In Drum and Fife:
      \>      \>      \> \hmm Library modules: Registers, Register file, FIFOs, ... \\
      \>      \> Memory system \\
      \>      \>      \> Memory module(s) \\
-     \>      \>      \> MMIO device modules ({\eg} UART, timer, interrupt controller)
+     \>      \>      \> MMIO device modules ({\eg} UART, timer, GPIO, interrupt controller)
 \end{tabbing}
 
 In the next several sections we describe the concepts of {\BSV} modules
@@ -85,8 +86,8 @@ seeing/using/creating several examples.
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 We sometimes write {\BSV} modules that do not themselves contain internal
 state, for stylistic and readability reasons.  One example is seen in
@@ -125,13 +126,21 @@ a first step.
 An \emph{interface declaration} in {\BSV} declares a new interface, which
 is a new {\BSV} \emph{type}, and looks like this:
 
-\begin{quote}
+\hm\fbox{
+\begin{minipage}{0.9\textwidth}\small
+
 {\tt interface} \emph{interface-type};
+
+\hmm ...
 
 \hmm \emph{... method and sub-interface declarations ...}
 
+\hmm ...
+
 {\tt endinterface}
-\end{quote}
+
+\end{minipage}
+}
 
 The interface represents the external view of a module, {\ie} it
 declares a set of \emph{methods} that can be invoked from an external
@@ -229,24 +238,37 @@ appropriate width to carry values of type $t$.
 A \emph{module definition} in {\BSV} describes a module with a particular
 interface type:
 
-\begin{quote}
+\hm\fbox{
+\begin{minipage}{0.9\textwidth}\small
+
 {\tt (* synthesize *)} \\
 {\tt module} \emph{module-name} {\tt (} \emph{interface-type} {\tt );}
 
+\vspace{1ex}
+
 \hmm \emph{... instantiation of module state (registers, FIFOs, other sub-modules) ...}
+
+\vspace{1ex}
 
 \hmm \emph{... behavior (rules and FSMs) ...}
 
+\vspace{1ex}
+
 \hmm \emph{... interface (API) method implementations ...}
 
+\vspace{1ex}
+
 {\tt endmodule}
-\end{quote}
+
+\end{minipage}
+}
 
 The \verb|(* synthesize *)| attribute at the top is optional.  With
-this attribute, the \emph{bsc} compiler create a separate Verilog
-module for this {\BSV} module.  Without the attribute, the compiler will
-``inline'' it into any parent module where it is instantiated.  We
-recommend using this attribute on all modules.\footnote{But see also
+this attribute, the \emph{bsc} compiler creates a separate Verilog
+module for this {\BSV} module, when compiling to Verilog.  Without the
+attribute, the compiler will ``inline'' it into any parent module
+where it is instantiated.  We recommend using this attribute on all
+modules.\footnote{But see also
 Section~\ref{Sec_Polymorphic_Types_and_Synthesizability} which
 desribes some modules where this attribute is ignored by the
 compiler.}
@@ -260,8 +282,8 @@ constructor can be invoked multiple times to obtain multiple
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 A notable difference between {\BSV} and other HDLs (Verilog,
 SystemVerilog and VHDL) is that even a lowly register is not special;
@@ -271,7 +293,7 @@ it is just another module, with an interface containing ``{\tt
 \vspace{1ex}
 
 In fact {\BSV} treats \emph{all} ``state elements'' (components that store
-persistent values) uniformly as modules with interfaces.
+persistent values) uniformly as modules with interfaces (``It's modules all the way down'').
 
 \end{minipage}}
 
@@ -285,7 +307,13 @@ persistent values) uniformly as modules with interfaces.
 
 A module is \emph{instantiated} using this syntax:
 
+\hm\fbox{
+\begin{minipage}{0.9\textwidth}\small
+
 \hm \emph{interface-type} \emph{x} {\tt <-} \emph{constructor} {\tt (}\emph{constructor-arg},...,\emph{constructor-arg}{\tt );}
+
+\end{minipage}
+}
 
 This creates a new instance of the module and binds the offered
 interface to the identifier \emph{x}.  Some constructors have no
@@ -297,7 +325,13 @@ Subsequently, methods of the module can be invoked using the syntax
 \index[BSV]{module!method invocation}
 \index[BSV]{Method!invocation of module method}
 
+\hm\fbox{
+\begin{minipage}{0.9\textwidth}\small
+
 \hmmmm \emph{x}.\emph{method-name} {\tt (}\emph{method-arg},...,\emph{method-arg}{\tt );}
+
+\end{minipage}
+}
 
 Some methods have no arguments, in which case even the parentheses
 surrounding the arguments can be omitted.
@@ -405,7 +439,8 @@ Here we declare a new identifier \verb|pc| with interface type
 the interface offered by a newly instantiated register.  The ``0''
 argument to \verb|mkReg()| specifies the reset-value of the register,
 {\ie} the value held in the register immediately after the hardware
-has been reset.
+has been reset (you can initialize it to any value in the register's
+type)..
 
 An alternative register constructor provided by the {\BSV} library is
 {\tt mkRegU}, where the ``U'' indicates that it is uninitialized,
@@ -422,6 +457,11 @@ An alternative register constructor provided by the {\BSV} library is
 
 \verb|mkRegU| instantiates a register with an unspecified
 (unpredictable) reset value, and hence does not need an argument.
+Unitialized registers are slightly cheaper in hardware (no reset
+wires, no initialization value wires, no multiplexer to choose between
+initialization and other update values).  They are often used in
+situations where we know that the module logic will never read the
+register before the first write.
 
 % ================================================================
 
@@ -479,8 +519,8 @@ contains both shorthands:
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 The use of the ``{\tt rg\_}'' prefix in the above examples is just our
 own syntactic convention, and not required in {\BSV} syntax, where any
@@ -536,16 +576,16 @@ we have 32 registers, we will use \verb|Bit#(5)| as the index type.
 ``\verb|data_t|'' is the type of value stored in each of the
 registers.  For RISC-V, this will be \verb|Bit#(XLEN)|.
 
-The \emph{rf}{\tt.upd(j,v)} method allows us to store the value
+The \emph{rf}{\tt{}.upd(j,v)} method allows us to store the value
 \emph{v} in the \emph{j}'th register of register file \emph{rf}.  The
-\emph{rf}{\tt.sub(j)} method returns the current value \emph{v} in the
-\emph{j}'th register of register file \emph{rf}.
+\emph{rf}{\tt{}.sub(j)} method returns the current value \emph{v} in
+the \emph{j}'th register of register file \emph{rf}.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 The index type {\tt index\_t} can be any type that has a
 representation in bits, {\ie} for which we have used the {\tt
@@ -658,7 +698,7 @@ Notice that the {\tt FIFOF\#(t)} interface does not indicate the
 \emph{capacity} of the FIFO, {\ie} the number of elements it can hold
 from head to tail.  This is deliberate; we may choose different
 capacities for each FIFO instance as required by its use context.  We
-also want to be able flexibly and transparently to substitute a FIFO
+also want flexibly and transparently to be able to substitute a FIFO
 with another that has greater or less capacity.
 
 % ----------------------------------------------------------------
@@ -673,7 +713,7 @@ with another that has greater or less capacity.
 The reason that the \verb|first| and \verb|deq| methods are separated
 is because there are many situations where we wish to examine the head
 of a FIFO and only consume the value if it matches some condition of
-interest.  But there are many situations where we don't need this
+interest.  But there are also many situations where we don't need this
 generality, and we invoke both methods together in the same action.
 For convenience we define a function for this:
 
@@ -759,14 +799,14 @@ useful as an intermediate buffer between pipeline stages.
 \index[BSV]{mkBypassFIFOF@{\tt mkBypassFIFOF}!module (constructor)}
 
 {\tt mkPipelineFIFOF} and {\tt mkBypassFIFOF} are two FIFO module
-constructors from the {\BSV} library that are used heavily in Fife code
-shown in Chapter~\ref{ch_Fife_code}.
+constructors from the {\BSV} library that are used heavily in {\FIFE}
+code shown in Chapter~\ref{ch_Fife_code}.
 
 To first approximation, they can be regarded as single-element FIFOs
 that can be used instead of {\tt mkFIFOF}.  They have subtle
 \emph{performance} differences from {\tt mkFIFOF}, which is why we use
-them in Fife.  We will discuss these performance properties in detail
-in Sec~\ref{Sec_SpecialFIFOs}.
+them in {\FIFE}.  We will discuss these performance properties in
+detail in Sec~\ref{Sec_SpecialFIFOs}.
 
 % ----------------------------------------------------------------
 
@@ -792,8 +832,8 @@ This instantiates a FIFO whose queue capacity is 8.
 % ----------------
 \vspace{2ex}
 
-NOTE: \hfill \fbox{\small
-\begin{minipage}{0.875\textwidth}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 Module constructor arguments can play different roles.  In {\tt
 mkReg(0)} the argument (0) becomes a dynamic value, the value held in
@@ -837,12 +877,12 @@ bits.
 \label{Sec_Semi_FIFOs}
 
 FIFOs are often used to connect two separate modules together, for one
-module to communicate values to the next one.  For example, the Fetch
-stage communicates memory requests to memory.  In this situation, one
-module only interacts with the ``enqueue'' side, and the other module
-only interacts with the ```dequeue'' side.  The following
-``Semi-FIFO'' interfaces interfaces for each ``end'' of a FIFO queue
-are useful for this purpose.  The enqueue (upstream) side:
+module to communicate values to the next one.  For example, in a CPU,
+the Fetch stage communicates memory requests to memory.  In this
+situation, one module only interacts with the ``enqueue'' side, and
+the other module only interacts with the ```dequeue'' side.  The
+following ``Semi-FIFO'' interfaces interfaces for each ``end'' of a
+FIFO queue are useful for this purpose.  The enqueue (upstream) side:
 
 \index[BSV]{FIFOF_I@{\tt FIFOF\_I}!Semi-FIFO interface ({\tt enq} subset/view of {\tt FIFOF})}
 \index[BSV]{Semi-FIFO!{\tt FIFOF\_I} semi-FIFO interface}
@@ -950,15 +990,15 @@ endfunction
 \index[BSV]{mkConnection@{\tt mkConnection} for connecting compatible interfaces}
 
 We will frequently want to connect the output of one FIFO to the input
-of another FIFO.  For example, in Fife, the interface of the Fetch
-stage includes this semi-FIFO sub-interface to commicate \verb|F_to_D|
-values to the Decode unit:
+of another FIFO.  For example, in {\FIFE}, the interface of the Fetch
+stage includes this semi-FIFO sub-interface to commicate
+\verb|Fetch_to_Decode| values to the Decode unit:
 
 {\footnotesize
 \begin{Verbatim}[frame=single, numbers=left]
 interface Fetch_IFC;
    ...
-   interface FIFOF_O #(F_to_D)  fo_Fetch_to_Decode;
+   interface FIFOF_O #(Fetch_to_Decode)  fo_Fetch_to_Decode;
    ...
 endinterface
 \end{Verbatim}
@@ -971,13 +1011,13 @@ to receive those values:
 \begin{Verbatim}[frame=single, numbers=left]
 interface Decode_IFC;
    ...
-   interface FIFOF_I #(F_to_D)  fi_Fetch_to_Decode;
+   interface FIFOF_I #(Fetch_to_Decode)  fi_Fetch_to_Decode;
    ...
 endinterface
 \end{Verbatim}
 }
 
-The the CPU module, at the next level up, instantiates the Fetch and
+The CPU module, at the next level up, instantiates the Fetch and
 Decode stages.  Then, they can be connected with a simple {\tt
 mkConnection} one-liner:
 
@@ -1017,7 +1057,7 @@ itself, and is very simple:
 \begin{Verbatim}[frame=single, numbers=left]
 module mkConnection #(FIFOF_O #(Fetch_to_Decode) f,    // module argument
                       FIFOF_I #(Fetch_to_Decode) d)    // module argument
-                    (Empty);                  // module interface
+                    (Empty);                           // module interface
    rule rl_connect;
        let x = f.first;
        f.deq;
@@ -1051,8 +1091,8 @@ dequeue) and {\tt d} is not full (has space, available to enqueue).
 \index[BSV]{Typeclass!instance of}
 \index[BSV]{Overloading: Typeclasses and typeclass instances}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 {\bf Advanced {\BSV} topic:} What if we want to connect the two
 semi-FIFOF interfaces with the arguments in the opposite order, {\ie}
@@ -1096,7 +1136,7 @@ Figure~\ref{Fig_Composed_FIFO_modularity_1}.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_Composed_FIFO_modularity}}
   \caption{\label{Fig_Composed_FIFO_modularity_1}
-           How we connect Fife stages}
+           How we connect {\FIFE} stages}
 \end{figure}
 
 In the upstream (producer) stage we instantiate a

@@ -22,9 +22,10 @@
 So far, we have only been discussing pure combinational functions, for
 which there is no concept of time.  Combinational functions are just
 pure mathematical functions, ``instantaneously'' transforming input
-values to output values.  In actual circuits, there is of course a
-finite delay through wires and gates, as dictated by physics, but in
-the digital abstraction of time we think of this as instantaneous.
+values to output values.  In actual combinational circuits, there is
+of course a finite delay through wires and gates, as dictated by
+physics, but in the digital abstraction of time we think of this as
+instantaneous.
 
 However, a CPU, as shown in Figure~\ref{Fig_FSMs_Simple_Instr_Exec}
 \begin{figure}[htbp]
@@ -35,7 +36,7 @@ However, a CPU, as shown in Figure~\ref{Fig_FSMs_Simple_Instr_Exec}
 	   (same as Fig.~\ref{Fig_Simple_Instr_Exec_w_structs})}
 \end{figure}
 represents a \emph{processs}, a behavior that evolves over time.  For
-example the Drum CPU executes one full instruction after another,
+example the {\DRUM} CPU executes one full instruction after another,
 repeating forever the flow along the black arrows in the diagram. For
 each instruction, first it performs a Fetch operation, which sends a
 request to memory. Some time later, the memory sends back a response,
@@ -50,7 +51,7 @@ The simplest temporal process in hardware systems is the \emph{FSM}
 (Finite State Machine).  A classical notation for FSMs is the
 so-called ``bubble-and-arrow'' diagram.
 Figure~\ref{Fig_FSM_Bubble_and_Arrow} shows a greatly over-simplified
-bubble-and-arrow diagram for an FSM controlling an elevator.
+bubble-and-arrow diagram for an FSM controlling an elevator (a lift).
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_FSM_Bubble_and_Arrow}}
   \caption{\label{Fig_FSM_Bubble_and_Arrow}
@@ -72,20 +73,20 @@ performed by the transition.
 Figure~\ref{Fig_FSMs_Simple_Instr_Exec} can be interpreted as a
 bubble-and-arrow FSM diagram: each yellow rectangle (bubble) is a
 state, and the process transitions from state to state, thereby
-executing RISC-V instructions.  This is exactly what the Drum CPU
+executing RISC-V instructions.  This is exactly what the {\DRUM} CPU
 does.  In Figure~\ref{Fig_FSMs_Simple_Instr_Exec} the arrows are
 labeled by the information (a struct) that is produced in one state
 and consumed by another.
 
 In this chapter we describe some special constructs for FSMs in {\BSV}.
 In the next chapter we will discuss using these FSM constructs to code
-the Drum CPU.
+the {\DRUM} CPU.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 In the literature one may read about FSMs where, from some state, we
 could have a choice of transitions to different destination states.
@@ -137,22 +138,66 @@ other {\via} shared state (registers, FIFOs, register files, {\etc}).
 This is a more \emph{modular} and \emph{scalable} way to think about
 complex digital systems.
 
-\index[BSV]{Drum!as a set of concurrent FSMs}
+\index[BSV]{Drum!as an FSM concurrent with its memory system}
 
-Even though Drum CPU execution is a sequential FSM, the overall system
-can be viewed as a pair of concurrent FSMs: Drum and the Memory System
-(see Figure~\ref{Fig_CPU_Simulation}).  Each has its own internal FSM
-process and behavior, and they communicate memory requests and
-responses back and forth.
+{\DRUM} CPU execution is a sequential FSM, but the overall system in
+which {\DRUM} is embedded can be viewed as a pair of concurrent FSMs:
+{\DRUM} and the Memory System (see Figure~\ref{Fig_CPU_Simulation}).
+Each has its own internal FSM process and behavior, and they
+communicate memory requests and responses back and forth.
 
 \index[BSV]{Fife!as a set of concurrent FSMs}
 
-For Fife, we will interpret \emph{each} yellow box in
-Figure~\ref{Fig_FSMs_Simple_Instr_Exec} as its own FSM.  They all run
-concurrently (and concurrently with the memory system), and
+For {\FIFE}, we will interpret \emph{each} yellow box in
+Figure~\ref{Fig_FSMs_Simple_Instr_Exec} as its own FSM.  All these
+FSMs run concurrently (and concurrently with the memory system), and
 communicate various struct values (labels in
 Figure~\ref{Fig_FSMs_Simple_Instr_Exec}) through FIFOs between the
 FSMs.
+
+% ================================================================
+
+\subsection{Communicating between FSM states and between concurrent FSMs}
+
+\index[BSV]{FSMs!communication between states}
+\index[BSV]{FSMs!communication between concurrent FSMS}
+
+In a sequential FSM, communication between states is easily
+accomplished using ordinary registers---one transition writes into a
+register, and another transition reads from the register.  Because the
+FSM is sequential, transitions occur in some well-defined order, and
+so there is a well-defined order in which the register is written and
+read.
+
+Communication between concurrent FSMs, on the other hand is more
+easily accomplished using FIFOs.  Concurrent FSMs may run at different
+rates and so there may not be any predictable temporal ordering
+between when FSM A produces a datum and when another FSM B tries to
+consume the datum.  Instead, we let FSM A \emph{enqueue} the datum
+into a FIFO, and let FSM B \emph{dequeue} the datum from the FIFO.  If
+FSM B tried to consume the datum before it has been produced, it will
+simply ``block'', or stall, trying to read an empty FIFO, until FSM A
+produces the datum into the FIFO.
+
+FIFOs between concurrent FSMs also enables \emph{pipelining} or
+\emph{streaming}.  FSM A can repeatedly enqueue data into a FIFO even
+if FSM B is not yet ready to consume it.  FSM B can repeatedly consume
+data already produced by FSM A.  If the FIFO becomes full, FSM A will
+simply block when it tries to enqueue the next datum into it.  If the
+FIFO becomes empty, FSM B will simply block until data is available.
+The FIFO is said to perform automatic ``flow control'' between
+producer and consumer FSMs.  In this way, communication via FIFOs
+between concurrent FSMs is more ``elastic'', or ``asynchronous''.
+
+In {\DRUM}, where Figure~\ref{Fig_FSMs_Simple_Instr_Exec} represents
+the states (yellow bubbles) and transitions (black arrows) of a
+sequential FSM, we will use registers to communicate between states.
+We use FIFOs to communicate to/from the concurrent external FSM, the
+memory system.
+
+In {\FIFE}, where the yellow bubbles of
+Figure~\ref{Fig_FSMs_Simple_Instr_Exec} represent concurrent FSMs, we
+will use FIFOs to communicate between the FSMs.
 
 % ****************************************************************
 
@@ -179,7 +224,7 @@ Section~\ref{Sec_StmtFSM_vs_rules} discusses when to use
 \verb|StmtFSM| and when to use rules.
 
 \verb|StmtFSM| is a sub-language within {\BSV} for specifying
-structured FSMs.  The sub-language which we use in Drum has the
+structured FSMs.  The sub-language which we use in {\DRUM} has the
 following grammar (Section~\ref{Sec_StmtFSM_more_features}
 describes more available features in {\tt StmtFSM}):
 
@@ -209,16 +254,16 @@ that each composition scheme itself results in a {\tt Stmt} with a
 single start and end state.  This allows them to be nested
 recursively.
 
-We will use these \verb|StmtFSM| constructs to code Drum, which is a
+We will use these \verb|StmtFSM| constructs to code {\DRUM}, which is a
 simple sequential process.  \verb|StmtFSM| will not be adequate to
-code Fife, which is a collection of concurrent FSMs; for that, we will
+code {\FIFE}, which is a collection of concurrent FSMs; for that, we will
 use rules explicitly.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 We have already encountered examples of sequential {\tt StmtFSM}s,
 with just a sequential block, in the simple testbench in
@@ -302,7 +347,7 @@ itself has type \verb|Action|:
 }
 
 Although the actions in an \verb|action| block must be written in some
-textual order, \verb|action| \emph{blocks do not involve any
+textual order, \verb|action| \emph{blocks do not involve any temporal
 sequencing.}  There is no temporal ordering of the actions in an
 \verb|action| block.  All the actions in an \verb|action| block
 (either directly in the block or, recursively in a sub-block) occur
@@ -354,8 +399,8 @@ statements).
 A binding, per se, \emph{is not an action!}  It is just a convenience,
 giving a name to the value of the right-hand side expression.
 
-Bindings (whether with a type or with \verb|let|) impose some
-syntactic ordering on statements in the block: a binding of an
+Bindings (whether with an explicit type or with \verb|let|) impose
+some syntactic ordering on statements in the block: a binding of an
 identifier must precede any use of that identifier.  In the previous
 two examples, line 2 (the binding) must precede lines 3 and 4 (the
 actions), but lines 3 and 4 could be written in the opposite order.
@@ -414,8 +459,8 @@ it can be nested inside other \verb|StmtFSM| constructs.
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 In Section~\ref{BSV_Combo_Circuits_if_then_else} we described ordinary
 {\BSV} if-then-else expressions, which often represent hardware
@@ -537,12 +582,12 @@ sequence the collection and display/checking/analysis of the resulting
 outputs; \verb|StmtFSM| is a quick and simple way to write such
 sequences.  We showed an example of a small testbench using
 \verb|StmtFSM| in Section~\ref{BSV_small_testbench}.  When the DUT is
-pipelined, we use two FSMs, one to deliver a sequence of stimulus
-inputs while the other one concurrently processes the sequence of
-output results.
+pipelined, we use two concurrent FSMs, one to deliver a sequence of
+stimulus inputs while the other one concurrently processes the
+sequence of output results.
 
 \verb|StmtFSM| can also be used in designs; indeed, that is what we
-are going to describe in Chapter~\ref{ch_Drum_code} for the Drum CPU.
+are going to describe in Chapter~\ref{ch_Drum_code} for the {\DRUM} CPU.
 Section~\ref{Sec_StmtFSM_vs_rules} discusses when to use
 \verb|StmtFSM| and when to use rules.
 
@@ -556,10 +601,10 @@ Section~\ref{Sec_StmtFSM_vs_rules} discusses when to use
 \index[BSV]{StmtFSM@{\tt StmtFSM}!{\tt par} blocks (fork-join concurrency)}
 
 In this chapter we have covered all the features of \verb|Stmt| that
-we need for coding Drum.  There are many additional constructors for
+we need for coding {\DRUM}.  There are many additional constructors for
 \verb|Stmt| that we skip here, such as for-loops and repeat-loops.
 Perhaps the most interesting are fork-join concurrent blocks
-(\verb|par|-\verb|endpar|), which specify concurrent FSMs.
+(\verb|par|-\verb|endpar|), which specify nested concurrent FSMs.
 
 The type \verb|Stmt| is a first-class type in {\BSV}.  You can write
 functions that have arguments and results of type \verb|Stmt|.  For

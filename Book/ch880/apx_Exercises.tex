@@ -1027,8 +1027,45 @@ Write polymorphic versions of these types that are parameterized on
 
 % ================================================================
 
-\subsection*{Ex-08-A: GPR Register Files}
-\label{Ex-08-A-GPR-Register-Files}
+\subsection*{Ex-08-A: GPR {\tt x0} is constant zero}
+\label{Ex-08-A-GPR-x0}
+
+(Please refer Section~\ref{Sec_RISCV_regfile}.)
+
+Why did the RISC-V ISA designers specify that GPR {\tt x0} is constant zero?
+
+\emph{Hint:} Many computations require a constant zero value.  For
+example, in C, a {\tt for}-loop iterating over an array requires an
+intitial index of zero.  Think about how you would produce a value
+zero in a register without using {\tt x0}.
+
+Why not reserve more GPRs for other common constant values (such as ``1'')?
+
+% ================================================================
+
+\subsection*{Ex-08-B: GPR {\tt x0} as a destination register}
+\label{Ex-08-B-GPR-x0-as-Rd}
+
+(Please refer Section~\ref{Sec_RISCV_regfile}.)
+
+Why would one use {\tt x0} as a destination register ({\tt Rd} field of an instruction)?
+
+\emph{Hint:}
+\begin{itemize}
+
+ \item Think about JUMP instructions where we are not interested in
+       saving a "return address" (unconditional jumps, returns from
+       subroutines, tail-recursion, continuation-passing-style, ...
+
+ \item Think about CSR and AMO instructions where we are not
+       interested in the value returned to a register.
+
+\end{itemize}
+
+% ================================================================
+
+\subsection*{Ex-08-C: GPR Register Files}
+\label{Ex-08-C-GPR-Register-Files}
 
 (Please refer Section~\ref{Sec_RISCV_regfile}.)
 
@@ -1052,8 +1089,8 @@ Write polymorphic versions of these types that are parameterized on
 
 % ================================================================
 
-\subsection*{Ex-08-B: CSRs}
-\label{Ex-08-B-CSRs}
+\subsection*{Ex-08-D: CSRs}
+\label{Ex-08-D-CSRs}
 
 (Please refer Section~\ref{Sec_RISCV_CSRs}.)
 

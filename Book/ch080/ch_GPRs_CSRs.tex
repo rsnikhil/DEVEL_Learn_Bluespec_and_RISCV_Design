@@ -21,7 +21,7 @@ Purpose Registers) and CSRs (Control and Status Registers).
 
 % ****************************************************************
 
-\section{A register file for GPRs, with special treatment of {\tt x0}}
+\section{A register file for GPRs, with special treatment of register 0 ({\tt x0})}
 
 \label{Sec_RISCV_regfile}
 
@@ -33,6 +33,8 @@ Any value written to \verb|x0| is ignored/discarded, and any read from
 \verb|x0| always returns 0.  So, presumably, we do not need an actual
 register to hold this value, just some circuitry to ensure that we
 always get 0 when we try to ``read'' from \verb|x0|.
+
+\EXERCISE{Ex-08-A-GPR-x0}
 
 In the previous section, we used the module \verb|mkRegFileFull| to
 instantiate a register file with 32 registers (inferring 32 from the
@@ -52,6 +54,12 @@ instructions can (and do) use {\tt x0} as a source or destination
 register, so we need circuitry to deal with attempts to read/write
 {\tt x0}.  One possible solution is to make a ``wrapper'' module {\tt
 mkGPRs} around the library register file module.
+
+% ----------------------------------------------------------------
+
+\EXERCISE{Ex-08-B-GPR-x0-as-Rd}
+
+% ----------------------------------------------------------------
 
 Although we could have reused the {\tt RegFile \#(t1,t2)} interface,
 we take the opportunity to define a new interface {\tt GPRs\_IFC} that
@@ -73,10 +81,9 @@ The module instantiates a library register file {\tt rf}.  The methods
 simply invoke the underlying {\tt rf} methods.  The read-methods
 override this by returning 0 when the index is 0.
 
-
 % ----------------------------------------------------------------
 
-\EXERCISE{Ex-08-A-GPR-Register-Files}
+\EXERCISE{Ex-08-C-GPR-Register-Files}
 
 % ================================================================
 
@@ -200,6 +207,6 @@ two were described in Section~\ref{Sec_Traps}.
 
 % ----------------------------------------------------------------
 
-\EXERCISE{Ex-08-B-CSRs}
+\EXERCISE{Ex-08-D-CSRs}
 
 % ****************************************************************

@@ -25,8 +25,8 @@ interface GPRs_IFC #(numeric type xlen);                           // \blatex{GP
    method Bit #(xlen) read_rs1 (Bit #(5) rs1);
    method Bit #(xlen) read_rs2 (Bit #(5) rs2);
    method Action      write_rd (Bit #(5) rd, Bit #(xlen) rd_val);
-
-   // For debugger                                                       // \belide{3}
+                                                                         // \belide{3}
+   // For debugger
    method Bit #(xlen) read_dm  (Bit #(5) rs);
    method Action      write_dm (Bit #(5) rd, Bit #(xlen) rd_val);        // \eelide
 endinterface                                                       // \elatex{GPRs_IFC}
@@ -70,15 +70,15 @@ module mkGPRs (GPRs_IFC #(xlen));                                    // \blatex{
    method Action write_rd (Bit #(5) rd, Bit #(xlen) rd_val) if (initialized);
       rf.upd (rd, rd_val);
    endmethod
-
-   // For debugger                                                       // \belide{3}
+                                                                         // \belide{3}
+   // For debugger
    method Bit #(xlen) read_dm  (Bit #(5) rs) if (initialized);
       return ((rs == 0) ? 0 : rf.sub (rs));
    endmethod
 
-   method Action      write_dm (Bit #(5) rd, Bit #(xlen) rd_val) if (initialized);    // \eelide
+   method Action write_dm (Bit #(5) rd, Bit #(xlen) rd_val) if (initialized);
       rf.upd (rd, rd_val);
-   endmethod
+   endmethod                                                             // \eelide
 endmodule                                                            // \elatex{mkGPRs}
 
 // ----------------
