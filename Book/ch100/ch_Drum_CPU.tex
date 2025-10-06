@@ -2,10 +2,9 @@
 
 % ****************************************************************
 
-\chapter{RISC-V: the Drum CPU \\
-(unpipelined; FSM-sequenced)}
+\chapter{RISC-V: the {\DRUM} CPU \\ (unpipelined; FSM-sequenced)}
 
-\markboth{Ch \arabic{chapter}: The Drum CPU code}{\copyrightnotice}
+\markboth{Ch \arabic{chapter}: The {\DRUM} CPU code}{\copyrightnotice}
 
 \setcounter{page}{1}
 % \renewcommand{\thepage}{\arabic{page}}
@@ -17,7 +16,7 @@
 
 \section{Introduction}
 
-In this chapter we code Drum's behavior, illustrated in
+In this chapter we code {\DRUM}'s behavior, illustrated in
 Figure~\ref{Fig_Drum_Instr_Exec}, using BSV's \verb|StmtFSM|
 construct to code the FSM.
 \begin{figure}[htbp]
@@ -30,13 +29,13 @@ construct to code the FSM.
 
 % ****************************************************************
 
-\section{The Drum CPU module interface}
+\section{The {\DRUM} CPU module interface}
 
 \label{Sec_Drum_CPU_interface}
 
 \index[RV]{Drum!CPU interface}
 
-The Drum CPU interface is shown below.
+The {\DRUM} CPU interface is shown below.
 
 \SHOWCODE{Code_Extracts/CPU_IFC.tex}
 
@@ -66,24 +65,24 @@ The interface is simple:
 
 \end{tightlist}
 
-(Please re-read Section~\ref{Sec_Harvard_architecture} for the
-discussion on Harvard architectures, which have separate memory-access
-channels for instructions (Fetch, IMem) and for data (LOAD/STORE,
-DMem)).
+(You may wish to re-read Section~\ref{Sec_Harvard_architecture} for
+the discussion on Harvard architectures, which have separate
+memory-access channels for instructions (Fetch, IMem) and for data
+(LOAD/STORE, DMem)).
 
-Later we will see that Fife shares this interface, so that the Fife
-and Drum CPUs are easily interchangeable in any system or testbench.
+Later we will see that {\FIFE} shares this interface, so that the {\FIFE}
+and {\DRUM} CPUs are easily interchangeable in any system or testbench.
 
 % ****************************************************************
 
-\section{The Drum CPU module}
+\section{The {\DRUM} CPU module}
 
 \label{Sec_Drum_CPU_module}
 
 \index[RV]{Drum!Skeleton module}
 \index[RV]{Fife!Skeleton module}
 
-The STATE and INTERFACE sections of the Drum CPU module are shown
+The STATE and INTERFACE sections of the {\DRUM} CPU module are shown
 below (we will discuss the elided BEHAVIOR section shortly).
 
 \SHOWCODE{Code_Extracts/Drum_mkCPU_STATE.tex}
@@ -92,14 +91,15 @@ below (we will discuss the elided BEHAVIOR section shortly).
 
 \SHOWCODE{Code_Extracts/Drum_mkCPU_IFC.tex}
 
-The STATE section first instantiates a register \verb|rg_running|,
-initially False, that will be set to True by the \verb|init| method
-that initializes the PC to a specific initial value.  The FSM will
-wait for this before starting the first instruction-fetch.
+The STATE section first instantiates a register \verb|rg_runstate|,
+initially \verb|CPU_HALTED|, that will be set to \verb|CPU_RUNNING| by
+the \verb|init| method that initializes the PC to a specific initial
+value.  The FSM will wait for this before starting the first
+instruction-fetch.
 
 Then, \verb|mkCPU| instantiates a register for the PC, and then the
 GPRs module (desribed in Section~\ref{Sec_RISCV_regfile}) and the CSRs
-modules (described in Section~\ref{Sec_RISCV_CSRs}).  Then, it
+module (described in Section~\ref{Sec_RISCV_CSRs}).  Then, it
 instantiates a set of registers to hold values between temporal FSM
 steps (with struct types shown in Figure~\ref{Fig_Drum_Instr_Exec}).
 For example, the Fetch stage will write a value into
@@ -117,27 +117,27 @@ In the display above we have elided the BEHAVIOR section of the
 module, which we will describe shortly.
 
 In the INTERFACE section, the \verb|init| method initializes the PC
-and sets \verb|rg_running| to true, releasing the BEHAVIOR section to
-start executing.  We use the interface transformers discussed in
-Section~\ref{Sec_interface_transfomers} that produce Semi-FIFO
-``views'' of FIFOs to lift the FIFO interfaces into the module
-interface.
+and sets \verb|rg_runstate| to \verb|CPU_RUNNING|, releasing the
+BEHAVIOR section to start executing.  We use the interface
+transformers discussed in Section~\ref{Sec_interface_transfomers} that
+produce Semi-FIFO ``views'' of FIFOs to lift the FIFO interfaces into
+the module interface.
 
 % ****************************************************************
 
-\section{Help-functions for the Drum CPU module behavior}
+\section{Help-functions for the {\DRUM} CPU module behavior}
 
 \label{Sec_Drum_FSM_help_fns}
 
-Before we look at the FSM implementing Drum behavior, we first have
+Before we look at the FSM implementing {\DRUM} behavior, we first have
 some \verb|Action| functions that encapsulate some common actions
 performed in several states in the FSM.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 In BSV, function definitions do not have to be at the top-level of a
 file, in fact they can be defined at any nested level.  Here, we
@@ -156,7 +156,7 @@ instruction):
 \SHOWCODE{Code_Extracts/Drum_upd_rd.tex}
 
 The following function is the last action during an instruction's
-execution, updating the PC and the instruction number:
+execution, updating the PC:
 
 \SHOWCODE{Code_Extracts/Drum_redirect.tex}
 
@@ -169,13 +169,13 @@ trap-handling.
 
 % ****************************************************************
 
-\section{The main behavior actions in the Drum CPU module}
+\section{The main behavior actions in the {\DRUM} CPU module}
 
 \label{Sec_Drum_actions}
 
 \index[RV]{Drum!CPU module actions}
 
-The following sub-sections show the main actions performed by Drum,
+The following sub-sections show the main actions performed by {\DRUM},
 corresponding to the components in Figure~\ref{Fig_Drum_Instr_Exec}.
 
 % ----------------
@@ -183,16 +183,16 @@ corresponding to the components in Figure~\ref{Fig_Drum_Instr_Exec}.
 
 \index[BSV]{Action@{\tt Action}!as a first-class type}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 In BSV, the type {\tt Action} is a first-class type.  This means we
 can write ``action expressions'' and bind the result (of type {\tt
 Action}) to a name, and then refer to that action later by that name.
-We use this capability below first to define the Drum FSM actions;
-then we will embed these actions in the Drum FSM in
+We use this capability below first to define the {\DRUM} FSM actions;
+then we will embed these actions in the {\DRUM} FSM in
 Section~\ref{Sec_Drum_CPU_module_behavior}.  We also reuse exactly the
-same actions in the alternate specification of Drum's behavior using
+same actions in the alternate specification of {\DRUM}'s behavior using
 Rules instead of {\tt StmtFSM} in Chapter~\ref{ch_Drum_Rules}.
 
 \end{minipage}}
@@ -222,7 +222,7 @@ We can also write a zero-argument function similar to \verb|a_Fetch|:
 \begin{Verbatim}[frame=single]
 function Action fa_Fetch ();
    action
-      ...
+      await (rg_runstate != CPU_HALTED);
       let y <- fn_Fetch (rg_pc,
                          ...
       rg_Fetch_to_Decode <= y.to_D;
@@ -300,7 +300,7 @@ does not matter---in the Execute stage we will only use these values
 in instructions that need them. Recall that while in a software
 programming language this may seem unnecessary or wasted work, in this
 hardware context nothing is wasted---the hardware for reading both
-registers exist, there is nothing lost in using it.
+registers exists; there is nothing lost in using it.
 
 % ================================================================
 
@@ -311,14 +311,15 @@ FSM stages.  Figure~\ref{Fig_Retire_Drum} shows the details of the
 four ``flows'' that may follow.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_Retire_Layers_1}}
-  \caption{\label{Fig_Retire_Drum}Execute and Retire actions in Drum}
+  \caption{\label{Fig_Retire_Drum}Execute and Retire actions in {\DRUM}}
 \end{figure}
 Each of the flows can have an exception or a normal (OK) result.  The
 Direct flow may need to execute a SYSTEM instruction (ECALL, EBREAK,
 MRET and CSRRxx).  Executing a CSRRxx instruction may also have an
 exception or normal result.  For each flow, the colored ovals show the
-actions may be performed; these correspond exactly to the three
-help-functions discussed earlier in Section~\ref{Sec_Drum_FSM_help_fns}.
+actions that may be performed; these correspond exactly to the three
+help-functions discussed earlier in
+Section~\ref{Sec_Drum_FSM_help_fns}.
 
 We next elaborate each of these four flows.
 
@@ -366,9 +367,10 @@ distinguish them in order to select the correct cause code.
 
 There is a final ``\verb|else|'' clause, but between the functionality
 of the Decode and Dispatch stages, it should be impossible to enter
-this clause (this is just a bit of defensive programming and can
+this clause.  This is just a bit of defensive programming and can
 safely be removed; even if not removed, it does not produce any
-hardware).
+hardware, since it only contains non-synthesizable-to-hardware
+constructs such as \verb|$display| and \verb|$finish|.
 
 % ----------------------------------------------------------------
 
@@ -391,7 +393,7 @@ Or 600? Or 601? Or something else?  The RISV-V spec says it should be
 600, {\ie} an explicit CSRRxx write into \verb|minstret| should
 override any implicit increment of the CSR.
 
-In the Drum code, we invoke:
+In the {\DRUM} code, we invoke:
 
 {\footnotesize
 \begin{Verbatim}
@@ -466,7 +468,7 @@ it on the outgoing \verb|f_DMem_req| FIFO.
 
 \SHOWCODE{Code_Extracts/Drum_EX_DMem.tex}
 
-Then, the Retire action pops the mememory response from the incoming
+Then, the Retire action pops the memory response from the incoming
 \verb|f_DMem_rsp| FIFO.  If the memory returned an exception, we
 compute the proper cause code and then invoke
 \verb|fa_setup_exception()| to record it.  If the memory did not
@@ -480,7 +482,7 @@ resume execution at the fall-through PC.
 
 \subsection{FSM actions for exceptions}
 
-The final action of the Drum FSM is used in case any of the Retire
+The final action of the {\DRUM} FSM is used in case any of the Retire
 flows recorded an exception.  It invokes the \verb|mav_exception()|
 method in the CSRs module, and invokes \verb|fa_redirect_Fetch| so
 that execution resumes at the trap-vector PC provided in CSR
@@ -490,24 +492,16 @@ that execution resumes at the trap-vector PC provided in CSR
 
 % ****************************************************************
 
-\section{The Drum CPU module behavior}
+\section{The {\DRUM} CPU module behavior}
 
 \label{Sec_Drum_CPU_module_behavior}
 
 \index[RV]{Drum!CPU module behavior}
 
-Having defined all the actions needed by Drum, we can now assemble
-them into the Drum FSM.  First we define an FSM specification
+Having defined all the actions needed by {\DRUM}, we can now assemble
+them into the {\DRUM} FSM.  First we define an FSM specification
 \verb|exec_one_instr| (of type \verb|Stmt|) for executing a single
 instruction.
-
-Then, we embed that \verb|Stmt| in a next-level
-\verb|Stmt| in an infinite while-loop, preceded by an \verb|await|
-action that waits for the initial PC to be set by the \verb|init|
-method. Finally, we instantiate that \verb|Stmt| using a
-\verb|mkAutoFSM| module that will implement the behavior starting
-immediately when the circuit emerges from reset.  The FSM never stops,
-because of the infinite while-loop.
 
 {\footnotesize
 \begin{Verbatim}
@@ -521,6 +515,18 @@ module mkCPU (CPU_IFC);
 }
 
 \SHOWCODE{Code_Extracts/Drum_exec_one_instr.tex}
+
+Then, we embed that \verb|Stmt| in a next-level \verb|Stmt| in an
+infinite while-loop.  In the loop we first check if any attached
+hardware debugger has requested the CPU to be halted and, if not,
+takes an interrupt if one is pending, otherwise executes one
+instruction.
+
+Finally, we instantiate that \verb|Stmt| using a \verb|mkAutoFSM|
+module that will implement the behavior starting immediately when the
+circuit emerges from reset.  The FSM never stops, because of the
+infinite while-loop.
+
 \SHOWCODE{Code_Extracts/Drum_FSM.tex}
 
 {\footnotesize
@@ -540,18 +546,16 @@ place at an even later instant.  After that, the FSM goes down one of
 four alternative paths (Direct, Control, Int and DMem).  Finally, if
 \verb|rg_exception| is true, it performs \verb|a_exception|.
 
-The \verb|a_Fetch| action tries to enqueue an IMem request to memory
-and enqueue an \verb|Fetch_to_Decode| struct on an output FIFO.  The
-action is not ``enabled'' until both FIFOs have space available (are
-not full).  When the Fetch action fires, both enqueues are performed,
-atomically.
+The \verb|a_Fetch| action tries to enqueue an IMem request to memory.
+The action is not ``enabled'' until the FIFO has space available (is
+not full).  When the Fetch action fires it enqueues the memory
+request, and writes the \verb|rg_Fetch_to_Decode| register atomically.
 
 The \verb|a_Decode| action tries to dequeue an IMem response from
-memory, dequeue a \verb|Fetch_to_Decode| struct from an imput FIFO,
-and enqueue a \verb|Decode_to_RR| struct on an output FIFO.  The
-action is not ``enabled'' until the input FIFOs have data available
-(are not empty) and the output FIFO has space available (is not full).
-When the Decode action fires, both dequeues and an the enqueue are
+memory, read a \verb|Fetch_to_Decode| struct from an input register,
+and write a \verb|Decode_to_RR| struct on an output register.  The
+action is not ``enabled'' until the input FIFO has data available (is
+not empty).  When the Decode action fires, these actions are
 performed, atomically.
 
 Thus, the time interval between the Fetch instant and the Decode
@@ -562,8 +566,8 @@ Section~\ref{Sec_mem_latency} on unpredictable memory latency).
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 Looking ahead to a topic we'll discuss in more detail in
 Chapter~\ref{ch_Rules_I}, each module interface method has a so-called
@@ -592,17 +596,17 @@ FIFO.
 
 \section{Conclusion}
 
-And that is the complete Drum CPU!  We can compile it with \emph{bsc}
+And that is the complete {\DRUM} CPU!  We can compile it with \emph{bsc}
 into Verilog, connect the CPU interface to a memory system, and run
 the system to execute RISC-V programs compiled for the RV32I ISA
-subset (and, further, Drum can recover from illegal instructions due
+subset (and, further, {\DRUM} can recover from illegal instructions due
 to trap-handling).
 
 % ================================================================
 
-\subsection{But Drum code looks just like C!?  Why not code it in C?}
+\subsection{But {\DRUM} code looks just like C!?  Why not code it in C?}
 
-Looking at the BSV FSM code for Drum, it seems like we could convert
+Looking at the BSV FSM code for {\DRUM}, it seems like we could convert
 it into C code by simply replacing a few BSV idioms with corresponding
 C idioms (like replacing {\tt begin}-{\tt end} and {\tt action}-{\tt
 endaction} with ``{\tt \{}'' and ``{\tt \}}'', replacing BSV register
@@ -614,7 +618,7 @@ This can indeed be done, and the result would be a C simulator for
 RISC-V!  We could compile it with any C compiler and run the software
 on any platform.
 
-So, why not code Drum in C instead of BSV, and change the \emph{bsc}
+So, why not code {\DRUM} in C instead of BSV, and change the \emph{bsc}
 compiler to accept C syntax?  It is difficult to compile
 general-purpose C into hardware.  C has many constructs that have no
 obvious mapping into hardware, such as pointers, the address-of
@@ -629,19 +633,19 @@ within an action block) versus temporally sequenced (actions in an
 FSM).  A C-to-hardware compiler would have to reconstruct this
 information.
 
-But the killer reason is sequentiality {\vs} concurrency.  With Drum
+But the killer reason is sequentiality {\vs} concurrency.  With {\DRUM}
 it is deceptively easy to imagine a simple correspondence with C,
-because Drum is a sequential FSM, and C is a sequential language.
+because {\DRUM} is a sequential FSM, and C is a sequential language.
 When we advance to concurrent FSMs, including pipelined processors
-like Fife, we depart subtantially and deeply from sequential process
+like {\FIFE}, we depart subtantially and deeply from sequential process
 semantics, and C becomes more and more unsuitable for hardware
 description.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 There are products in the marketplace under the rubric of ``High Level
 Synthesis'' (HLS) that translate C source codes into synthesizable
@@ -667,7 +671,7 @@ See also Appendix~\ref{apx_Why_BSV} for more discussion on this topic.
 
 % ================================================================
 
-\subsection{Adding more RISC-V register-to-register instructions to Drum}
+\subsection{Adding more RISC-V register-to-register instructions to {\DRUM}}
 
 \index[RV]{Drum!Adding instructions for M, F/D and Custom extensions}
 
@@ -680,7 +684,7 @@ instructions (RV32I), with many standard optional extensions, such as:
  \item Other custom instructions
 \end{itemize}
 
-The Drum design of Figure~\ref{Fig_Drum_Instr_Exec} can easily be
+The {\DRUM} design of Figure~\ref{Fig_Drum_Instr_Exec} can easily be
 extended to accomodate such register-to-register extensions, by adding
 more execution stages as illustrated in
 Figure~\ref{Fig_Additional_RISCV_Instructions}.
@@ -691,35 +695,35 @@ Figure~\ref{Fig_Additional_RISCV_Instructions}.
 \end{figure}
 
 The {\tt OpClass} type in {\tt Inter\_Stage.bsv} needs to be extended
-to handle the new classes of instructions (M, FD, Custom).  The
-Ddecode stage's big if-then-else must be extended to handle these new
-kinds of instructions.  The Register-Read-and-Dispatch stage must be
-extended to dispatch into the new execution pipelines.  It can reuse
-the existing register-read facilities.  The Retire stage needs to
-field the results from the new execution pipelines and retire those
-instructions.  It can reuse the existing register-write and exception
-facilities.
+to handle the new classes of instructions ({\bf M}, {\bf F,D},
+Custom).  The Decode stage's big if-then-else must be extended to
+handle these new kinds of instructions.  The
+Register-Read-and-Dispatch stage must be extended to dispatch into the
+new execution pipelines.  It can reuse the existing register-read
+facilities.  The Retire stage needs to field the results from the new
+execution pipelines and retire those instructions.  It can reuse the
+existing register-write and exception facilities.
 
-To implement the F and D instructions, we need a second register file
-similar to the GPRs, to hold the bit representations of floating-point
-values.  Register-read and register-write logic now needs to be
-cognizant of which register file we are addressing.
+To implement the {\bf F} and {\bf D} instructions, we need a second
+register file similar to the GPRs, to hold the bit representations of
+floating-point values.  Register-read and register-write logic now
+needs to be cognizant of which register file we are addressing.
 
 \index[RV]{Latency-tolerant design}
 
-The actual functional logic for M, F/D and/or Custom will be entirely
-internal to the respective EX\_Int\_Mul\_Div, EX\_Floating\_Point or
-EX\_Custom stages.  Note, these stages can have variable latency;
-indeed they are likely to take many cycles for their computations,
-which are more complex than simple interger ops.  However, no
-modification is necessary to the rest of Drum (or Fife) to accommodate
-these additional latencies; Drum and Fife are both
-``latency-tolerant'' designs so it is easy to replace/add units with
-different latencies.
+The actual functional logic for {\bf M}, {\bf F,D} and/or Custom will
+be entirely internal to the respective EX\_Int\_Mul\_Div,
+EX\_Floating\_Point or EX\_Custom stages.  Note, these stages can have
+variable latency; indeed they are likely to take many cycles for their
+computations, which are more complex than simple integer ops.
+However, no modification is necessary to the rest of {\DRUM} (or
+{\FIFE}) to accommodate these additional latencies; {\DRUM} and
+{\FIFE} are both ``latency-tolerant'' designs so it is easy to
+replace/add units with different latencies.
 
 % ================================================================
 
-\subsection{Adding RISC-V Atomic Memory Op instructions to Drum}
+\subsection{Adding RISC-V Atomic Memory Op instructions to {\DRUM}}
 
 \index[RV]{Drum!Adding instructions for the A-extension}
 
@@ -729,10 +733,10 @@ AMOADD.  These ops both read and write memory.  For example, AMOSWAP
 writes a value to memory like STORE, and returns the previous value
 from that location, like LOAD.
 
-These, too, are easily added to Drum and Fife.  As far as the CPU is
+These, too, are easily added to {\DRUM} and {\FIFE}.  As far as the CPU is
 concerned, these are merely new memory opcodes, just like the LOAD and
 STORE opcodes.  All the work is really done outside the CPU in the
-memory system.  In Drum and Fife, we'd reuse the EX\_DMem facilities,
+memory system.  In {\DRUM} and {\FIFE}, we'd reuse the EX\_DMem facilities,
 just decoding and transmitting the new memory opcodes.
 
 % ****************************************************************

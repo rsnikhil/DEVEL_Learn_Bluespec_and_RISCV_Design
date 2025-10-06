@@ -50,7 +50,7 @@ import RVFI_Report    :: *;
 // Debugger control
 
 typedef enum {CPU_RUNNING,
-              CPU_HALTREQ,     // halt requested
+              CPU_HALTREQ,     // halt requested (only if we have a HW debugger)
               CPU_HALTED
 } CPU_RunState
 deriving (Bits, Eq, FShow);
@@ -132,7 +132,7 @@ module mkCPU (CPU_IFC);
 
    Epoch dummy_epoch = 0;
 
-   // ================================================================    // \eelide
+   // ================================================================
    // Debugger control
    Reg #(Bit #(XLEN)) rg_dpc        <- mkRegU;
    Reg #(Bit #(3))    rg_dcsr_cause <- mkReg (dcsr_cause_ebreak);
@@ -145,7 +145,7 @@ module mkCPU (CPU_IFC);
    // while only supporting M priv. For M+U, M+S+U, M+VS+VU+U also
    // depends on other dcsr ebreak bits
    Bool ebreak_halt = (dcsr [index_dcsr_ebreakm] == 1'b1);
-
+                                                                          // \eelide
    Bool is_running = (rg_runstate != CPU_HALTED);
    Bool is_halted  = (rg_runstate == CPU_HALTED);
                                                                 // \elatex{Drum_mkCPU_STATE}
@@ -166,8 +166,8 @@ module mkCPU (CPU_IFC);
 	 if (x1.has_rd) begin
 	    let rd = instr_rd (x1.instr);
 	    gprs.write_rd (rd, rd_val);
-
-	    wr_log (rg_flog,                                            // \belide{12}
+                                                                        // \belide{12}
+	    wr_log (rg_flog,
 		    $format ("    CPU.fa_update_rd: rd:%0d rd_val:%08h",
 			     rd, rd_val));                              // \eelide
 	 end
@@ -177,7 +177,8 @@ module mkCPU (CPU_IFC);
    function Action fa_redirect_Fetch (Bit #(XLEN) next_pc);     // \blatex{Drum_redirect}
       action
 	 rg_pc   <= next_pc;
-	 rg_inum <= rg_inum + 1;
+                                                                        // \belide{9}
+	 rg_inum <= rg_inum + 1;                                        // \eelide
       endaction
    endfunction                                                  // \elatex{Drum_redirect}
 
@@ -201,7 +202,7 @@ module mkCPU (CPU_IFC);
    Action a_Fetch =                                             // \blatex{Drum_Fetch}
    action
       await (rg_runstate != CPU_HALTED);
-
+                                                                        // \belide{6}
       Bit #(1) step = dcsr [index_dcsr_step];
       if (step == 1'b1) begin
 	 rg_runstate   <= CPU_HALTREQ;
@@ -209,15 +210,15 @@ module mkCPU (CPU_IFC);
 	 $display ("CPU: SINGLE STEP PC:%0x", rg_pc);
       end
 
-      // The following are only for branch-prediction; not used in Drum // \belide{6}
-      let predicted_pc = 0;                                             // \eelide
+      // The following is only for branch-prediction; not used in Drum
+      let predicted_pc = 0;
+                                                                        // \eelide
       let y <- fn_Fetch (rg_pc,
 			 predicted_pc,                                  // \belide{25}
 			 dummy_epoch,
 			 rg_inum,
 			 rg_inum,
-			 rg_flog);
-                                                                        // \eelide
+			 rg_flog);                                      // \eelide
       rg_Fetch_to_Decode <= y.to_D;
       f_IMem_req.enq (y.mem_req);
                                                                         // \belide{6}
@@ -271,7 +272,8 @@ module mkCPU (CPU_IFC);
 	 fa_setup_exception (x_direct.pc,        // epc
 			     x_direct.cause,     // cause
 			     x_direct.tval);     // tval
-	 log_Retire_Direct_exc (rg_flog, x_direct);
+                                                                    // \belide{9}
+	 log_Retire_Direct_exc (rg_flog, x_direct);                 // \eelide
       end
       // ----------------
       else if (is_legal_CSRRxx (x_direct.instr)) begin
@@ -297,8 +299,8 @@ module mkCPU (CPU_IFC);
 	 let new_pc <- csrs.mav_xRET;
 	 fa_redirect_Fetch (new_pc);
 	 csrs.ma_incr_instret;
-
-	 rvfi_report.rvfi_MRET (x_direct,                          // \belide{12}
+                                                                   // \belide{9}
+	 rvfi_report.rvfi_MRET (x_direct,
 				new_pc,
 				csrs.mv_instret,
 				dummy_epoch);
@@ -444,7 +446,7 @@ module mkCPU (CPU_IFC);
 	 end
 	 fa_update_rd (x_direct, truncate (data));
 	 fa_redirect_Fetch (x_direct.fallthru_pc);
-	 csrs.ma_incr_instret;                                          // \belide (9)
+	 csrs.ma_incr_instret;                                          // \belide{9}
 	 rvfi_report.rvfi_DMem (x_direct,
 				mem_rsp,
 				truncate (data),

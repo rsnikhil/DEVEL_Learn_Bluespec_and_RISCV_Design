@@ -40,10 +40,10 @@
    mkAutoFSM (seq                                               // \blatex{Drum_FSM}
 		 while (True)
 		    if (rg_runstate == CPU_HALTREQ)
-		       action
+		       action                                       // \belide{23}
 			  csrs.save_dpc_dcsr_cause_prv (rg_pc, rg_dcsr_cause, priv_M);
 			  rg_runstate <= CPU_HALTED;
-		       endaction
+		       endaction                                    // \eelide
 		    else if (can_take_intr)
 		       a_interrupt (cause);
 		    else
