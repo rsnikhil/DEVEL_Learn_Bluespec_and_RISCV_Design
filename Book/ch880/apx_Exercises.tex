@@ -1156,6 +1156,33 @@ statement in the Drum CPU? (Try it in simulation!)
 
 \hdivider
 
+\section*{Chapter 11: {\BSV}: Verifying {\BSV} designs}
+
+% ================================================================
+
+\subsection*{Ex-11-A: {\tt FShow}}
+\label{Ex-11-A-FShow}
+
+(Please refer Section~\ref{sec_FShow}.)
+
+Write a small test program that constructs a struct value (of type
+{\tt Decode\_to\_RR}, say), and then prints it in two different ways:
+
+{\footnotesize
+\begin{Verbatim}[frame=single]
+   Decode_to_RR y = ... construct a Decode_to_RR struct value ...
+
+   $display ("y         is ", y);
+   $display ("fshow (y) is ", fshow (y));
+\end{Verbatim}
+}
+
+Observe and comment on the difference.
+
+% ****************************************************************
+
+\hdivider
+
 \section*{Chapter 13: {\BSV}: Rules and their Semantics}
 
 % ================================================================

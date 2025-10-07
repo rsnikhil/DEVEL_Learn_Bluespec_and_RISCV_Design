@@ -118,7 +118,7 @@ result).  An \verb|Action| or \verb|ActionValue| method
 \emph{performs} its action if its ENABLE argument is true.
 
 Consider the following rule (artificial, just for illustration, not
-taken from code of Drum or Fife or any actual design):
+taken from code of {\DRUM} or {\FIFE} or any actual design):
 
 {\footnotesize
 \begin{Verbatim}[frame=single, numbers=left]
@@ -259,8 +259,8 @@ standard digital abstraction we idealize all this as zero delay.
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 Although Figure~\ref{Fig_Rule_Actions_1_2} is useful in developing
 intuitions, it is important to understand that {\BSV} semantics stands
@@ -349,8 +349,8 @@ no surprises.
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 Observe that rule-level semantics is non-deterministic: if several
 rules' CAN\_FIRE is true, we can choose any one.  This is sometimes
@@ -381,16 +381,16 @@ functional correctness when we compute just one deterministic outcome
 of a non-deterministic program, but we ignore that here.}}, {\ie}
 ``does the program compute what we expect it to compute?'', without
 appealing to clocks and clocked digital hardware! This includes all of
-Drum and Fife; in fact, the {\BSV} code for Drum and Fife does not
+{\DRUM} and {\FIFE}; in fact, the {\BSV} code for {\DRUM} and {\FIFE} does not
 mention any clock, and in this book we do not mention clocks and
-temporal properties of Drum and Fife until much later, in
+temporal properties of {\DRUM} and {\FIFE} until much later, in
 Chapters~\ref{ch_Rules_II} and \ref{ch_Optimization}.
 
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 This, again, can be shocking and scary to the newcomer to {\BSV} who has
 already learned some digital hardware design.  In traditional teaching
@@ -702,7 +702,7 @@ often be much more readable than the corresponding rules---the
 while-loop, the sequencing, and the if-then-else structure are not
 readily apparent from the rules.
 
-In Chapter~\ref{ch_Drum_Rules} we will show how the FSM for Drum from
+In Chapter~\ref{ch_Drum_Rules} we will show how the FSM for {\DRUM} from
 Chapter~\ref{ch_Drum_code} can be hand-translated directly into rules.
 Indeed, the \emph{bsc} compiler performs a similar translation of
 \verb|StmtFSM| into rules.
@@ -728,7 +728,7 @@ At the very small scale of a single \verb|Action| (perhaps containing
 sub-actions), this can be the body of a single rule, and this is often
 more succinct and clear than using \verb|StmtFSM| for just one action.
 Many modules have a single rule in their body (we will see many such
-examples in Fife, in later chapters).
+examples in {\FIFE}, in later chapters).
 
 Ability to debug is sometimes another consideration. For explicit
 rules, the programmer supplies rule names, which are presumably
@@ -752,7 +752,7 @@ to save a clock cycle by writing with rules instead.
 \subsection{Use rules for unstructured processes}
 
 The situation where rules are often much clearer than \verb|StmtFSM|
-is when we have an unstructured process, {\ie} a process thqt is not
+is when we have an unstructured process, {\ie} a process that is not
 easily expressed with a proper nesting of \verb|Stmt| constructs
 (sequencing, if-then-else, and loops).
 

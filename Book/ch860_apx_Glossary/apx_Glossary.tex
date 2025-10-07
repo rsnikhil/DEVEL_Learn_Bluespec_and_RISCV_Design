@@ -195,15 +195,15 @@
   Zephyr, to secure micro-kernels like seL4, to full-featured OSs like
   Linux, Windows, MacOS, Solaris, AIX, {\etc}
 
-\item[\bf PBT] Property-Based Testing.  This was a technique that was
-  pioneered by Haskell's \emph{QuickCheck}
-  (\url{https://en.wikipedia.org/wiki/QuickCheck}), and facilities for
-  which have now been replicated in numerous other programming
-  languages.  It is an automated technique that repeatedly generates
-  random stimulus for the DUT and, for each such input, tests one or
-  more \emph{properties} which are formal logical predicates
-  expressing some required correctness property of the DUT.  The
-  stimuli are typically generated in increasing size order, where
+\item[\bf PBT] Peanut Butter on Toast.  No, seriously: Property-Based
+  Testing.  This was a technique that was pioneered by Haskell's
+  \emph{QuickCheck} (\url{https://en.wikipedia.org/wiki/QuickCheck}),
+  and facilities for which have now been replicated in numerous other
+  programming languages.  It is an automated technique that repeatedly
+  generates random stimulus for the DUT and, for each such input,
+  tests one or more \emph{properties} which are formal logical
+  predicates expressing some required correctness property of the DUT.
+  The stimuli are typically generated in increasing size order, where
   ``size'' depends on the type of stimulus.  When a property failure
   is encountered, the system attempts to ``shrink'' the failing
   stimulus by randomly omitting parts of the stimulus, in the hope of

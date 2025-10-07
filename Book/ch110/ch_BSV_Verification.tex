@@ -130,12 +130,12 @@ directives for the arguments that follow (\verb|%d| for signed
 integers, \verb|%b| for binary numbers, \verb|%h| for hexadecimal
 numbers, {\etc}).
 
-These {\BSV} statements for printing only exist in simulation code.  They
-are omitted completely by synthesis tools that target actual hardware
-(ASIC or FPGA).\footnote{This is not because of any fundamental
-synthesizability difficulty, it is only because there is no standard
-concept of ``file'' or ``output stream'' in hardware designs, not even
-a serial port.}
+These {\BSV} statements for printing only exist in simulation code.
+They are omitted completely (ignored completely) by synthesis tools
+that target actual hardware (ASIC or FPGA).\footnote{This is not
+because of any fundamental synthesizability difficulty, it is only
+because there is no standard concept of ``file'' or ``output stream''
+in hardware designs, not even a serial port.}
 
 In {\BSV}, additionally, you can interleave format strings and arguments, like this:
 
@@ -146,6 +146,8 @@ In {\BSV}, additionally, you can interleave format strings and arguments, like t
 
 \subsection{{\tt FShow} for ``pretty-printing'' enums and structs}
 
+\label{sec_FShow}
+
 \index[BSV]{FShow@{\tt FShow}!Standard Typeclass containing the {\tt fshow()} function}
 \index[BSV]{fshow@{\tt fshow}!Standard overloaded function producing {\tt Fmt}
 objects for various types}
@@ -153,8 +155,8 @@ objects for various types}
 In any enum or struct type declaration in {\BSV}, one can attach a
 ``\verb|deriving(FShow)|'' clause to request the \emph{bsc} compiler
 to define an ``\verb|fshow|'' function for the type, with some default
-formatting.  For example, the Drum/Fife code has such a clause in the
-declaration of the \verb|Decode_to_RR| struct type:
+formatting.  For example, the {\DRUM}/{\FIFE} code has such a clause
+in the declaration of the \verb|Decode_to_RR| struct type:
 
 \SHOWCODE{Code_Extracts/Decode_to_RR.tex}
 
@@ -170,6 +172,10 @@ variants):  Example:
    $fwrite  (file, "Decode result is ", f);
 \end{Verbatim}
 }
+
+% ----------------------------------------------------------------
+
+\EXERCISE{Ex-11-A-FShow}
 
 % ================================================================
 
@@ -247,7 +253,7 @@ which contains the following function:
 
 This can be used in any Action context ({\eg} a rule body) to check an
 expected property each time that Action context is executed.  For
-example the Drum CPU code includes the following excerpt:
+example the {\DRUM} CPU code includes the following excerpt:
 
 {\footnotesize
 \begin{Verbatim}[frame=single, numbers=left, label=src\_Drum/CPU.bsv]
@@ -264,14 +270,35 @@ example the Drum CPU code includes the following excerpt:
 
 which checks for the unexpected situation where the DMem memory
 response was ``deferred'' (deferred memory responses are only possible
-for speculative memory accesses, which only occur in Fife and not in
-Drum).  Every time this action is executed (on every DMem response),
-the boolean condition is tested and, if false, it aborts the
-simulation after printing the associated string.
+for speculative memory accesses, which only occur in {\FIFE} and not
+in {\DRUM}).  Every time this action is executed (on every DMem
+response), the boolean condition is tested and, if false, it aborts
+the simulation after printing the associated string.
 
 These \verb|dynamicAssert| statements have no cost in final real
 hardware because, like \verb|$display| statements, they exist only in
 simulation code.  Thus, one should not hesitate to use them liberally.
+
+% ----------------
+\vspace{2ex}
+
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
+
+A {\tt dynamicAssert} is no more than an if-$B$-then-$A_1$-else-$A_2$ where
+\begin{tightlist}
+  \item $B$ is the assertion condition
+  \item Action $A_1$ is {\tt noAction} (do nothing if the condition is true)
+  \item Action $A_2$ is {\tt{}\$display(}\emph{string-to-be-printed}{\tt{})}
+        followed by a {\tt \$finish} to terminate the simulation.
+\end{tightlist}
+
+In fact, the if-then-else version is often more convenient because we
+can write {\tt \$display} to also print current values of interest,
+instead of just a {\tt String}.
+
+\end{minipage}}
+% ----------------
 
 % ****************************************************************
 

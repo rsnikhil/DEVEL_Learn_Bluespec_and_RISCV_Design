@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package Top;
 
@@ -80,20 +80,21 @@ module mkTop (Empty);
                                                                 // \blatex{Top_init}
    // Initialize modules
    rule rl_step1 (rg_top_step == 1);
-      let with_debugger <- $test$plusargs ("debug");
-
-
-      let init_params = Initial_Params {flog:              rg_logfile,
-					pc_reset_value:    'h_8000_0000,
+      let with_debugger <- $test$plusargs ("debug");                // \belide{6}
+                                                                    // \eelide
+      let init_params = Initial_Params {pc_reset_value:    'h_8000_0000,
 					addr_base_mem:     'h_8000_0000,
 					size_B_mem:        'h_1000_0000,
+                                                                    // \belide{40}
+					flog:              rg_logfile,
 					dbg_listen_socket: (with_debugger ? 30000 : 0)};
+                                                                    // \eelide
       cpu.init (init_params);
       mems_devices.init (init_params);
-      dbg_stub.init (init_params);
-                                                                    // \belide{6}
+      dbg_stub.init (init_params);                                  // \belide{6}
+                                                                    // \eelide
       rg_top_step <= 2;
-   endrule                                                          // \eelide
+   endrule
                                                                 // \elatex{Top_init}
    // Get ready to run
    rule rl_step2 (rg_top_step == 2);

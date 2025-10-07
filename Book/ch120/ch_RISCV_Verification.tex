@@ -58,7 +58,7 @@ instructions executed by a RISC-V program on a particular initial
 memory contents is completely deterministic and repeatable.  This
 means that if we excute a RISC-V program P2 repeatedly in our test
 setup, or even run P2 on different implementations (such as a software
-simulator and Drum and Fife), they should all exhibit \emph{exactly}
+simulator and {\DRUM} and {\FIFE}), they should all exhibit \emph{exactly}
 the same sequence of instructions, or ``\emph{instruction trace}''.
 If one of them takes a particular conditional BRANCH, then the others
 should, as well.  If one of them traps due to, say, an illegal
@@ -121,12 +121,11 @@ can be shared across multiple projects.
 For the RISC-V ISA, there are several free and open-source software
 functional simulators available that we can use as a trusted
 reference.  Appendix~\ref{apx_resources_trusted_simulators} provides
-URL links to the two most well-known, the \emph{Spike} simulator and
-the \emph{Sail} simulator.  Each of them can be configured for a
-particular subset of the RISC-V ISA (such as RV32IM, or RV64IMAFDC,
-with or without privilege levels and virtual memory, {\etc}), and then
-run RISC-V programs, producing a log/trace of the instructions
-executed.
+URL links to the two most well-known, the {\SPIKE} simulator and the
+{\SAIL} simulator.  Each of them can be configured for a particular
+subset of the RISC-V ISA (such as RV32IM, or RV64IMAFDC, with or
+without privilege levels and virtual memory, {\etc}), and then run
+RISC-V programs, producing a log/trace of the instructions executed.
 
 It can be useful to be able to modify and customize a trusted software
 functional simulator.  For example, if we are extending the RISC-V ISA
@@ -137,17 +136,18 @@ Or, we may use the simulator in non-standard ways, such
 as the asymmetric tandem verification mode described in
 Section~\ref{Sec_Asymmetric_Tandem_Verification}.
 
-Being open-source, the Spike and Sail simulators can be modified for
-custom purposes.  Many companies also have their own trusted software
-RISC-V functional simulators for greater modifiability and
-customization (such as \emph{Cissr} from Bluespec, Inc.).
+Being open-source, the {\SPIKE} and {\SAIL} simulators can be modified
+for custom purposes.  Many companies also have their own trusted
+software RISC-V functional simulators for greater modifiability and
+customization (such as {\CISSR} from Bluespec, Inc.).
 
 Golden reference models are usually written as RISC-V interpreters in
-a software programming language (for example, Spike is written in
-C++).  In this case they only run as software on a standard computer.
+a software programming language (for example, {\SPIKE} is written in
+C++, and {\SAIL} is compiled with OCaml).  In this case they only run
+as software on a standard computer.
 
 Golden reference models can also be written in a high-level hardware
-design language, such as {\BSV}.  For example, we can think of Drum in
+design language, such as {\BSV}.  For example, we can think of {\DRUM} in
 this way.  Because it is a simple FSM, it is extremely simple and
 clear.  The advantage of a hardware golden reference model is that it
 can be synthesized into hardware and plugged into any system
@@ -215,7 +215,7 @@ If a candidate RISC-V CPU implementation claims to support, say,
 RV32IM, then it must run the relevant ACTs for RV32IM, and the
 produced signatures should match the official signature for that test
 published by RVI (the official signatures, in turn, are produced by
-RVI by running on a trusted simulator such as Spike or Sail).
+RVI by running on a trusted simulator such as {\SPIKE} or {\SAIL}).
 
 This is an ongoing project. Some relevant links:
 
@@ -249,7 +249,7 @@ that the bug has not resurfaced due to more recent changes).
 \index[BSV]{Formal verification}
 
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=0.8\textwidth,angle=0]{Figures/Fig_Levels_of_Assurance}}
+  \centerline{\includegraphics[width=0.8\textwidth,angle=0]{Figures/RSN_2025-10-06.000.00_Levels_of_Assurance}}
   \caption{\label{Fig_Levels_of_Assurance}
            Levels of Assurance}
 \end{figure}
@@ -267,13 +267,13 @@ executing the implementation at all, just analysis of the code for the
 implementation.  Formal verification may be partial (prove that the
 implementation is correct for certain inputs) or complete (for all
 inputs).  Although there has been huge progress in formal verifcation
-over the decades, as of 2024 it is still not able to handle very large
+over the decades, as of 2025 it is still not able to handle very large
 and complex programs; it is used very successfully for individual or
 small collections of modules, and for partial correctness.
 
 The hardware community has also been exploring formal verifation of
 hardware implementations, and there are several tools offered
-commercially.  But, as in in the software community, as of 2024 it is
+commercially.  But, as in in the software community, as of 2025 it is
 still not able to handle very large and complex designs; it is used
 quite successfully for individual or small collections of modules, and
 for partial correctness.
@@ -321,6 +321,9 @@ implementation:
        This will check correct handling of timer interrupts, and
        possibly memory maps and physical memory protection (PMPs).
 
+ \item Run a ``micro-kernel'' operating system, such as {\bf SeL4}.
+       This will check virtual memory systems and process-switching.
+
  \item Run the kernel of a full-service operating systsem (such as the Linux kernel).
 
  \item Run a standard distribution a full-service operating systsem
@@ -335,24 +338,24 @@ The latter items are often executed on FPGA because simulation speed may be too 
 
 % ****************************************************************
 
-\section{A testbench for Drum and Fife}
+\section{A testbench for {\DRUM} and {\FIFE}}
 
 Figure~\ref{Fig_CPU_Simulation} illustrates the structure of the
-testbench provided with this book for Drum and Fife.
+testbench provided with this book for {\DRUM} and {\FIFE}.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_CPU_Simulation}}
   \caption{\label{Fig_CPU_Simulation}
-           Top-level simulation setup for the Drum and Fife CPUs}
+           Top-level simulation setup for the {\DRUM} and {\FIFE} CPUs}
 \end{figure}
 On the left we see the top-level of the module hierarchy, and on the
 right we see some module interactions.  The top-level module,
 \verb|mkTop|, has the \verb|Empty| interface.
 
-The interface for Drum and Fife, \verb|CPU_IFC|, was described in
+The interface for {\DRUM} and {\FIFE}, \verb|CPU_IFC|, was described in
 Section~\ref{Sec_Drum_CPU_interface}.  The most important
 sub-interfaces are the FIFOs carrying IMem and DMem memory requests
 and responses.  \verb|mkTop| instantiates the \verb|mkCPU| module
-(which can be either Drum or Fife) and \verb|mkMems_Devices| modules.
+(which can be either {\DRUM} or {\FIFE}) and \verb|mkMems_Devices| modules.
 An excerpt from \verb|mkTop| is shown below:
 
 \SHOWCODE{Code_Extracts/mkTop.tex}
@@ -367,7 +370,7 @@ The \verb|mkMems_Devices| module implements models for memory, a UART
 (Universal Asynchronous Receiver/Transmitter, also known as a serial
 port), a real-time clock, and any other devices expected by the CPU
 and the RISC-V code running on the CPU.  Some of these (memory, UART,
-Fife store-buffer) are implemented by importing C code.
+{\FIFE} store-buffer) are implemented by importing C code.
 
 The memory system in the testbench also needs a way to be pre-loaded
 with the binary RISC-V code of the program that we want the CPU to
@@ -387,14 +390,14 @@ retrieves a value reprsenting the wall-clock time from
 
 \SHOWCODE{Code_Extracts/Top_relay_time.tex}
 
-Other than that, \verb|mkTop| plays no further role in execution.
-Rules inside \verb|mkCPU| operate the CPU, putting out IMem and DMem
-requests.  Rules inside \verb|mkMems_Devices| operate the memory and
-device models, returning IMem and DMem responses.
+Other than this startup code, \verb|mkTop| plays no further role in
+execution.  Rules inside \verb|mkCPU| operate the CPU, putting out
+IMem and DMem requests.  Rules inside \verb|mkMems_Devices| operate
+the memory and device models, returning IMem and DMem responses.
 
 We do not intend to describe \verb|mkMems_Devices| in any more detail
-here, since it is outside the main focus of this book, the Drum and
-Fife CPUs.  Section~\ref{Sec_Importing_C} has details on how to import
+here, since it is outside the main focus of this book, the {\DRUM} and
+{\FIFE} CPUs.  Section~\ref{Sec_Importing_C} has details on how to import
 C code into {\BSV}.  The interested student is welcome to peruse the code
 in the \verb|src_Top/| directory.
 
@@ -669,11 +672,52 @@ to a host machine then, once again, the trace can be compared with
 that of a trusted simulator.
 
 The trusted model can itself be written in a synthesizable hardware
-description language like {\BSV}.  In fact, the Drum CPU could be a
+description language like {\BSV}.  In fact, the {\DRUM} CPU could be a
 candidate, because it is an extremely simple implementation, not
 designed for speed, and so possibly trustworthy.  In this case, the
 entire setup in Figure~\ref{Fig_tandem_verification_II} could be in
 hardware, which is likely to run several orders of magnitude faster
 than any simulation.
+
+% ****************************************************************
+
+\section{Randomized Property-based testing (PBT) with {\TESTRIG}}
+
+For {\FIFE} and {\DRUM} we use a symmetric tandem-verification setup
+called {\TESTRIG} from the University of Cambridge.  We postpone
+details of this until Chapter~\ref{ch_TestRIG} which follows our
+discussion of {\FIFE}, because some of the more interesting naunces
+concern pipelining.  For now, briefly:
+
+\begin{itemize}
+
+ \item {\TESTRIG} generates a random instruction sequence and feeds it
+    to both {\SAIL} and to our DUT ({\FIFE} or {\DRUM}).  Both {\SAIL}
+    and our DUT return a sequence of reports to {\TESTRIG} summarizing
+    the effects of each instruction; effectively, a kind of trace of
+    the execution of the instruction sequence.
+
+    {\TESTRIG} checks if the two traces are identical and reports
+    success or failure.
+
+ \item {\TESTRIG} repeats this over a number of random sequences
+    (configurable).
+
+ \item {\TESTRIG} uses a Haskell program for sequence generation and
+    comparison.  Haskell has a {\QUICKCHECK} library for generic
+    generators, and {\TESTRIG} customizes this for generating RISC-V
+    instructions.
+
+ \item When a failure is detected on an instruction sequence, the
+    Haskell {\QUICKCHECK} library also has ways automatically to
+    \emph{shrink} the sequence and retry the test, and repeatedly
+    shrink while it still finds a failure.  This can often shrink a
+    failing sequence from thousands of instructions to a handful of
+    instructions, which makes it much easier to diagnose.
+
+\end{itemize}
+
+We will discuss {\TESTRIG} for {\FIFE} and {\DRUM} in detail in
+Chapter~\ref{ch_TestRIG}.
 
 % ****************************************************************

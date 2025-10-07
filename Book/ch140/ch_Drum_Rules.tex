@@ -2,9 +2,9 @@
 
 % ****************************************************************
 
-\chapter{RISC-V: the Drum unpipelined CPU (using Rules instead of {\tt StmtFSM})}
+\chapter{RISC-V: the {\DRUM} unpipelined CPU (using Rules instead of {\tt StmtFSM})}
 
-\markboth{Ch \arabic{chapter}: The Drum CPU with Rules}{\copyrightnotice}
+\markboth{Ch \arabic{chapter}: The {\DRUM} CPU with Rules}{\copyrightnotice}
 
 \setcounter{page}{1}
 % \renewcommand{\thepage}{\arabic{page}}
@@ -17,7 +17,7 @@
 \section{Introduction}
 
 In Section~\ref{Sec_Drum_CPU_module_behavior} we showed the complete
-behavior of the Drum CPU module, coded using BSV's \verb|StmtFSM|
+behavior of the {\DRUM} CPU module, coded using BSV's \verb|StmtFSM|
 construct for FSMs.
 
 In this short chapter we show a manual translation of that FSM into
@@ -34,10 +34,10 @@ the exercises the end of the next section.
 
 % ****************************************************************
 
-\section{The Drum CPU module behavior with Rules}
+\section{The {\DRUM} CPU module behavior with Rules}
 
 First we define an enumeration type to give symbolic labels to all the
-Drum FSM actions:
+{\DRUM} FSM actions:
 
 \SHOWCODE{Code_Extracts/Drum_Rules_Labels.tex}
 
@@ -58,11 +58,11 @@ side-by-side, to see how straightforward it is manually to translate a
 
 % ================================================================
 
-\subsection{Optimizing the Drum rules}
+\subsection{Optimizing the {\DRUM} rules}
 
 \label{Sec_Optimiizing_Drum_Rules}
 
-If we execute the Drum CPU on a RISC-V program and study the detailed,
+If we execute the {\DRUM} CPU on a RISC-V program and study the detailed,
 cycle-by-cycle execution trace, we will see many possibilities to
 eliminate ``wasted'' cycles.
 
@@ -109,7 +109,7 @@ eliminate ``wasted'' cycles.
 \end{itemize}
 
 These optimizations are easier to implement in the Rules version of
-Drum (instead of the \verb|StmtFSM| version), because the flow now
+{\DRUM} (instead of the \verb|StmtFSM| version), because the flow now
 becomes less structured, with ad-hoc jumps from some rules back to
 Fetch, {\etc}.  \verb|StmtFSM| can only express structured,
 properly-nested flows.
@@ -122,9 +122,9 @@ properly-nested flows.
 
 \section{Conclusion}
 
-And that is the complete Drum CPU behavior, written using Rules!  The
+And that is the complete {\DRUM} CPU behavior, written using Rules!  The
 reason this was so easy, and why this chapter is so short, is that we
 reused all the \verb|Action| definitions defined earlier for the FSM
-version of Drum.
+version of {\DRUM}.
 
 % ****************************************************************

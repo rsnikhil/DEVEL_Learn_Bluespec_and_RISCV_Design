@@ -37,7 +37,6 @@ FIGS += Fig_Interface_Buses.png
 FIGS += Fig_ISA_Modularity.png
 FIGS += Fig_J_imm.png
 FIGS += Fig_JAL_JALR.png
-FIGS += Fig_Levels_of_Assurance.png
 FIGS += Fig_LUI.png
 FIGS += Fig_Mem_Hierarchy.png
 FIGS += Fig_Retire_Layers_1.png
@@ -77,6 +76,10 @@ FIGS += RSN_2025-09-15.000.00_Fife_Epochs.png
 
 # FIGS += Fig_RISCV_Store_Buffer.png
 FIGS += RSN_2025-09-15.002.00_Fife_Store_Buffer.png
+
+# FIGS += Fig_Levels_of_Assurance.png
+FIGS += RSN_2025-10-06.000.00_Levels_of_Assurance.png
+
 
 .PHONY: help
 help:
