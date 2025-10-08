@@ -42,8 +42,6 @@ FIGS += Fig_Mem_Hierarchy.png
 FIGS += Fig_Retire_Layers_1.png
 FIGS += Fig_Retire_Layers_1_2.png
 FIGS += Fig_RISCV_Fuse_Decode_RR.png
-FIGS += Fig_RISCV_Retire_Ordering.png
-FIGS += Fig_RISCV_Scoreboard.png
 FIGS += Fig_Rule_Actions_1.png
 FIGS += Fig_Rule_Actions_1_2.png
 FIGS += Fig_Rule_Actions_Controlled.png
@@ -75,11 +73,17 @@ FIGS += RSN_2025-09-01.001.00_Two_MicroArchs.png
 FIGS += RSN_2025-09-15.000.00_Fife_Epochs.png
 
 # FIGS += Fig_RISCV_Store_Buffer.png
-FIGS += RSN_2025-09-15.002.00_Fife_Store_Buffer.png
+# FIGS += RSN_2025-09-15.002.00_Fife_Store_Buffer.png
+FIGS += RSN_2025-10-07.002.00_Store_Buffer.png
 
 # FIGS += Fig_Levels_of_Assurance.png
 FIGS += RSN_2025-10-06.000.00_Levels_of_Assurance.png
 
+# FIGS += Fig_RISCV_Scoreboard.png
+FIGS += RSN_2025-10-07.000.00_Scoreboard.png
+
+# FIGS += Fig_RISCV_Retire_Ordering.png
+FIGS += RSN_2025-10-07.001.00_Concurrent_Exec_Pipes.png
 
 .PHONY: help
 help:

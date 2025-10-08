@@ -2,9 +2,9 @@
 
 % ****************************************************************
 
-\chapter{RISC-V: the Fife pipelined CPU: Principles}
+\chapter{RISC-V: the {\FIFE} pipelined CPU: Principles}
 
-\markboth{Ch \arabic{chapter}: Fife Principles (DRAFT)}{\copyrightnotice}
+\markboth{Ch \arabic{chapter}: {\FIFE} Principles (DRAFT)}{\copyrightnotice}
 
 \setcounter{page}{1}
 % \renewcommand{\thepage}{\arabic{page}}
@@ -16,21 +16,21 @@
 
 \section{Introduction}
 
-In this chapter we turn our attention to Fife, the pipelined CPU.  Our
+In this chapter we turn our attention to {\FIFE}, the pipelined CPU.  Our
 focus here is purely on identifying new problems raised by pipelining,
 and proposing solutions.  In the next chapter we will look at BSV code
-to implement Fife.
+to implement {\FIFE}.
 
 Figure~\ref{Fig_Instr_Exec_w_FIFOs} annotates the abstract execution
 algorithm in Figure~\ref{Fig_Instr_Exec} with some specifics for the
-pipelined implementation in Fife.
+pipelined implementation in {\FIFE}.
 \begin{figure}[htbp]
 % OLD \centerline{\includegraphics[width=6in]{Fig_Instr_Exec_w_FIFOs}}
   \centerline{\includegraphics[width=6in]{RSN_2025-09-01.000.00_FifeDrum_Stages_Multilayer_L1_L2_L3}}
   \caption{\label{Fig_Instr_Exec_w_FIFOs}Pipelined interpretation of RISC-V instructions (Fig.~\ref{Fig_Instr_Exec} with some annotations)}
 \end{figure}
-Unlike Drum, where each yellow box was one step in a sequential
-process, for Fife we interpret each yellow box as containing its own
+Unlike {\DRUM}, where each yellow box was one step in a sequential
+process, for {\FIFE} we interpret each yellow box as containing its own
 infinite process.  There are now half-a-dozen or more processes in the
 diagram (one for each yellow box), all running \emph{concurrently}.
 Each black arrow in the diagram represents a flow of \emph{messages}
@@ -40,11 +40,11 @@ buffers (depicted by
 annotations in the figure).
 
 Each stage is an infinite loop, consuming incoming messages and
-producing outgoing messages.  Thus, while the Retire stage is working
-on instruction $n$, the Execute, Register-Read, Decode and Fetch
-stage(s) may be working on instructions $n+1$, $n+2$, $n+3$, and
-$n+4$, respectively.  Thus, there is a sequence, or train, of
-instructions flowing through the diagram from left to right.
+producing outgoing messages.  Thus, while the Writeback stage is
+working on instruction $n$, the Retire, Execute, Register-Read, Decode
+and Fetch stage(s) may be working on instructions $n+1$, $n+2$, $n+3$,
+$n+4$, and $n+5$, respectively.  Thus, there is a sequence, or train,
+of instructions flowing through the diagram from left to right.
 
 Pipelining raises four new problems, and these are the focus of this
 chapter:
@@ -75,7 +75,7 @@ PC:
 \begin{tightlist}
 
  \item The current Fetch itself can raise an exception (trap) if its
-        PC is misaligned, is an unsupported memory address, {\etc}.
+        PC is misaligned, is an unsupported memory address, {\etc}
         In this case the next PC will the trap-handler PC instead of
         the ``normal'' next PC.
 
@@ -126,12 +126,12 @@ called ``mispredicted'' or ``wrong-path'' instructions.
 % ----------------
 \vspace{2ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 RISC-V instructions are all 32-bits wide, so PC+4 is a reasonably good
 guess.  In ISAs that have variable-length instructions, prediction may
-be more complicated.  Even in RISC-V, when implementing the ``C''
+be more complicated.  Even in RISC-V, when implementing the {\bf C}
 (Compressed Instructions) extension, some instructions may be 16-bits
 wide, raising similar complications.
 
@@ -176,13 +176,13 @@ pass along $a_2$ to the Decode stage, from which point it can
 accompany $i_1$ as it journeys through the pipeline ({\ie} every
 instruction is accompanied by its next-PC prediction).
 
-When $i_1$ reaches the Retire stage, we know the \emph{correct} next
-PC (Trap handler PC?  PC+4?  Branch-taken target?  JAL/JALR target?).
-By comparing this actual next PC with $a_2$, we know whether the
+When $i_1$ reaches the Retire stage, we know the correct next PC (Trap
+handler PC?  PC+4?  Branch-taken target?  JAL/JALR target?).  By
+comparing this actual next PC with $a_2$, we know whether the
 successor to $i_1$ was predicted correctly or not.
 
 If we find that the prediction was correct, there is nothing more to
-be done; we allow the pipeline flow to proceed.
+be done; we allow the pipeline flow to proceed (to retire $i_2$).
 
 \index[RV]{PC prediction!redirection}
 \index[RV]{redirection on misprediction}
@@ -271,7 +271,7 @@ Section~\ref{Sec_Store_Buffers} and Section~\ref{Sec_Fife_Retire_Principles}.
 
 Suppose instruction $i_1$ writes to register $x_7$, and the following
 instruction $i_2$ reads from register $x_7$.  Instruction $i_1$'s
-write to $x_7$ only happens in the Retire stage.  If $i_2$ were to
+write to $x_7$ only happens in the Writeback stage.  If $i_2$ were to
 follow behind $i_1$ immediately, it will be in the Exec stage, and
 would have already read $x_7$ earlier when it was in the Register-Read
 stage.  In other words, it would have read a \emph{stale} or obsolete
@@ -284,7 +284,8 @@ precisely the purpose of the \verb|scoreboard| shown in
 Figure~\ref{Fig_Instr_Exec_w_FIFOs}.  The general scheme is shown in
 Figure~\ref{Fig_RISCV_Scoreboard}.
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=\textwidth]{Fig_RISCV_Scoreboard}}
+% OLD: \centerline{\includegraphics[width=\textwidth]{Fig_RISCV_Scoreboard}}
+  \centerline{\includegraphics[width=\textwidth]{RSN_2025-10-07.000.00_Scoreboard}}
   \caption{\label{Fig_RISCV_Scoreboard}
            Using a scoreboard to manage register read/write hazards}
 \end{figure}
@@ -293,7 +294,7 @@ The \verb|scoreboard| is an array of 32 1-bit registers (one bit for
 each GPR).  When an instruction (such as $i_1$) passes through the
 Register-Read stage, if it writes to register $x_7$, we set the
 corresponding bit 7 in the scoreboard to 1, indicating that $x_7$ is
-``busy''.  When $i_1$ reaches the Retire stage and writes to the
+``busy''.  When $i_1$ reaches the Writeback stage and writes to the
 register, it also resets the scoreboard bit 7 to 0, indicating that
 $x_7$ is ``not busy''.
 
@@ -301,7 +302,7 @@ When an instruction (such as $i_2$) reaches the Register-Read stage
 and wants to read a register (such as $x_7$), if the corresponding
 scoreboard bit says it is busy, then the Register-Read stage
 ``\emph{stalls}'', {\ie} it waits until the scoreboard condition is
-cleared (by $i_1$ in the Retire stage).
+cleared (by $i_1$ in the Writeback stage).
 
 \index[RV]{Pipeline!Bubble}
 \index[RV]{Bubble in a pipeline}
@@ -323,17 +324,17 @@ instruction occupying that stage.  We refer to this as a
 
 \subsection{Releasing Scoreboard Reservations for Uncommitted Instructions}
 
-When the Retire stage discards an instruction due to mis-speculation,
-that instruction may be one which normally would have written a result
-value into register $x_j$ in the register file.  If so, when it passed
-through the Register-Read-and-Dispatch stage, it would have marked
-register $x_j$ as ``busy'' in the scoreboard.  Now, when we discard
-the instruction, even though we do not write any value into register
-$x_j$, we still need to release the ``busy'' reservation on $x_j$
-(otherwise, any succeeding instruction trying to read $x_j$ will get
-stuck in the Register-Read stage.  Said another way, the reservation
-in the scoreboard is a side-effect of this instruction that needs to
-be rolled back.
+When the Writeback stage discards an instruction due to
+mis-speculation, that instruction may be one which normally would have
+written a result value into register $x_j$ in the register file.  If
+so, when it passed through the Register-Read-and-Dispatch stage, it
+would have marked register $x_j$ as ``busy'' in the scoreboard.  Now,
+when we discard the instruction, even though we do not write any value
+into register $x_j$, we still need to release the ``busy'' reservation
+on $x_j$ (otherwise, any succeeding instruction trying to read $x_j$
+will get stuck in the Register-Read stage.  Said another way, the
+reservation in the scoreboard is a side-effect of this instruction
+that needs to be rolled back.
 
 % ================================================================
 
@@ -345,7 +346,7 @@ be rolled back.
 \index[RV]{Short-circuiting (bypassing)}
 
 Digital hardware usually runs in time units of ``clock cycles''.  The
-Retire stage writes a GPR (possibly) and writes the scoreboard (to
+Writeback stage writes a GPR (possibly) and writes the scoreboard (to
 mark it ``not-busy'').  The Register-Read stage reads zero to two
 GPRs, reads the scoreboard (to check ``not-busy'') and writes the
 scoreboard (to set ``busy'').
@@ -353,18 +354,19 @@ scoreboard (to set ``busy'').
 \vspace{1ex}
 
 For ordinary registers a write is only visible on the next clock
-cycle.  Thus, if the scoreboard is just an ordinary register, the
-Register-Read stage cannot observe ``not-busy'' until one clock after
-the Retire stage has marked ``not-busy''.  This does not affect
+cycle.  Thus, if the register file and the scoreboard registers are
+just ordinary registers, the Register-Read stage cannot observe
+``not-busy'' or the new register value until one clock after the
+Writeback stage performed its writes.  This does not affect
 correctness, but slows the performance of the CPU.
 
 \vspace{1ex}
 
-It is possible to design some extra circuitry around the scoreboard so
-that the Register-Read stage can observe ``not-busy'' on the
-\emph{same} clock cycle as when Retire marks it ``not-busy''.  This
-technique is generically called ``\emph{bypassing}'' or
-``\emph{short-circuiting}''.
+It is possible to design some extra circuitry around the scoreboard
+and register file so that the Register-Read stage can observe
+``not-busy'' and the new register value on the \emph{same} clock cycle
+as when Writeback performs its writes.  This technique is generically
+called ``\emph{bypassing}'' or ``\emph{short-circuiting}''.
 
 % ----------------------------------------------------------------
 
@@ -383,7 +385,7 @@ complexity) would be:
      the Register-Read stage to process the next instruction, which
      may move into a different Execute stage.
 
- \item When Retire writes a register value, broadcast it to the
+ \item When Writeback writes a register value, broadcast it to the
      different Execute stages to enable instructions there that are
      stalled on this register value.
 
@@ -404,22 +406,23 @@ complexity) would be:
 
 As shown in Figure~\ref{Fig_RISCV_Retire_Ordering},
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=\textwidth]{Figures/Fig_RISCV_Retire_Ordering}}
+% OLD: \centerline{\includegraphics[width=\textwidth]{Figures/Fig_RISCV_Retire_Ordering}}
+  \centerline{\includegraphics[width=\textwidth]
+      {Figures/RSN_2025-10-07.001.00_Concurrent_Exec_Pipes}}
   \caption{\label{Fig_RISCV_Retire_Ordering}
-           Multiple pipelines in the Execute stage, of varying latencies}
+           Multiple concurrent pipelines in the Execute stage, of varying latencies}
 \end{figure}
-each yellow box in
-the Execute stage is an independent pipeline handling a certain subset
-of the instruction set.  For example, ``Execute Control'' handles
-BRANCH, JAL and JALR instructions. ``Execute Integer Arithmetic and
-Logic Ops'' handles LUI, AUIPC, and all arithmetic and logic
-instructions.  ``Exec Mem Op'' handles LOAD and STORE instructions.
-If we extend Fife to handle the ``M'' ISA extension, we would have a
-pipeline for integer multiply and divide instructions.  If we extend
-Fife to handle the ``F'' and ``D'' ISA extension, we would have a
-pipeline for floating point arithmetic.  The
-Register-Read-and-Dispatch stage sends information into these pipes
-depending on the kind of instruction.
+each yellow box in the Execute stage is an independent pipeline
+handling a certain subset of the instruction set.  For example,
+``Execute Control'' handles BRANCH, JAL and JALR
+instructions. ``Execute Integer Arithmetic and Logic Ops'' handles
+LUI, AUIPC, and all arithmetic and logic instructions.  ``Exec Mem
+Op'' handles LOAD and STORE instructions.  If we extend {\FIFE} to
+handle the {\bf M} ISA extension, we would have a pipeline for integer
+multiply and divide instructions.  If we extend {\FIFE} to handle the
+{\bf F} and {\bf D} ISA extension, we would have a pipeline for
+floating point arithmetic.  The Register-Read-and-Dispatch stage sends
+information into these pipes depending on the kind of instruction.
 
 Instructions may have different latencies in traversing these Execute
 pipes.  For example, Control and Integer ops may typically traverse in
@@ -450,6 +453,32 @@ next look for an output from the Exec Memory Ops pipe, even if outputs
 are already available on the Execute Control and/or Execute Integer
 pipes from later instructions.
 
+% ================================================================
+
+\subsection{Full out-of-order execution and reorder buffers}
+
+\index[RV]{Out-of-order execution}
+\index[RV]{Reorder buffers}
+
+The multiple concurrent execute pipelines in
+Figure~\ref{Fig_RISCV_Retire_Ordering} are independent and, because
+they may vary in complexity and latency, may execute instructions
+``out-of-order'' with respect to each other.  However, we assume that
+in each of the execute pipelines, the instructions flowing through
+that pipeline are executed (and complete) in order (FIFO-like
+ordering).  Because of this, our simple tagging scheme in the Retire
+stage is adequate to retire instructions across the execute pipelines
+in the correct order.
+
+Other microarchitecture designs use something called a ``reorder
+buffer'' (ROB), which can be regarded as an array of slots for
+completed instructions in the proper order.  Each slot is initially
+marked ``empty''.  Every instruction has a unique ordering number
+which is mapped to a particular index in the ROB.  When its execution
+is complete, it is placed in the ROB at the correct index and marked
+``complete''.  A separate process drains the ROB sequentially, waiting
+if necessary for the next slot to reach the completed state.
+
 % ****************************************************************
 
 \section{Allowing Memory Ops to be Pipelined, with a Store Buffer}
@@ -458,10 +487,10 @@ pipes from later instructions.
 
 \index[RV]{Store Buffer}
 
-Consider the Execute Memory Ops stage in
+Consider the Execute DMem (memory ops) stage in
 Figure~\ref{Fig_RISCV_Store_Buffer},
 \begin{figure}[htbp]
-  \centerline{\includegraphics[width=\textwidth]{RSN_2025-09-15.002.00_Fife_Store_Buffer}}
+  \centerline{\includegraphics[width=\textwidth]{RSN_2025-10-07.002.00_Store_Buffer}}
   \caption{\label{Fig_RISCV_Store_Buffer}
            Speculative and non-speculative DMem access, with a Store Buffer}
 \end{figure}
@@ -544,7 +573,7 @@ For these reasons, it is dangerous to perform any LOAD or STORE
 speculatively on non-memory devices.  The ``Execute Memory Ops'' stage
 does not even attempt the access; it simply defers such a request for
 future execution by the Retire stage.  The decision whether to defer a
-request or not is based on the address.
+request or not is based on the address (each address is for memory or .
 
 Once the LOAD/STORE instruction has reached the Retire stage and we
 know for sure that it is not speculative, the Retire stage performs
@@ -563,14 +592,14 @@ response, and retires the instruction.
 \label{Sec_Fife_Retire_Principles}
 
 Figure~\ref{Fig_Fife_Retire} summarizes the actions to be taken by
-Fife's Retire stage.
+{\FIFE}'s Retire stage.
 
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Fig_Retire_Layers_1_2}}
-  \caption{\label{Fig_Fife_Retire}Retire actions in Fife}
+  \caption{\label{Fig_Fife_Retire}Retire actions in {\FIFE}}
 \end{figure}
 
-Much of this is the same as in Figure~\ref{Fig_Retire_Drum} for Drum.
+Much of this is the same as in Figure~\ref{Fig_Retire_Drum} for {\DRUM}.
 The new additional details are:
 
 \begin{itemize}

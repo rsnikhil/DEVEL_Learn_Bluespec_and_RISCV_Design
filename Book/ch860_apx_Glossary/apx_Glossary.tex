@@ -241,6 +241,12 @@
   order to use the ISA, which is one of the factors behind its wide
   adoption by hundreds of vendors.
 
+\item[\bf ROB] Reorder buffer.  An array into which each completed
+  instruction is placed, at a specific index that represents its
+  proper ISA order.  Each slot is initially empty, and becomes full
+  when a completed instruction is placed there.  As separate process
+  drains completed instructions from this array in sequential order.
+
 \item[\bf RTOS] Real-Time Operating System.  A typically small
   operating sytem for small embedded systems.  Compared to, say,
   Linux,
