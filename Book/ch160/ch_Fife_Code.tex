@@ -2,9 +2,9 @@
 
 % ****************************************************************
 
-\chapter{RISC-V: the Fife pipelined CPU code}
+\chapter{RISC-V: the {\FIFE} pipelined CPU code}
 
-\markboth{Ch \arabic{chapter}: Fife code}{\copyrightnotice}
+\markboth{Ch \arabic{chapter}: {\FIFE} code}{\copyrightnotice}
 
 \setcounter{page}{1}
 % \renewcommand{\thepage}{\arabic{page}}
@@ -29,12 +29,12 @@ We repeat Figure~\ref{Fig_Instr_Exec_w_FIFOs} here, for reference.
 
 % ****************************************************************
 
-\section{The Fife top-level CPU module}
+\section{The {\FIFE} top-level CPU module}
 
 \label{Sec_Fife_CPU_module}
 
-The code for the top-level Fife CPU module is actually simpler than
-the code for the Drum CPU module, because it simply instantiates
+The code for the top-level {\FIFE} CPU module is actually simpler than
+the code for the {\DRUM} CPU module, because it simply instantiates
 sub-modules for each stage and connects them:
 
 \SHOWCODE{Code_Extracts/Fife_mkCPU.tex}
@@ -74,9 +74,9 @@ The last two lines are for \emph{non-speculative} DMem access, which
 we discussed in Section~\ref{Sec_DMem_MMIO}.
 
 Note that the module interface \verb|CPU_IFC| is exactly the same as
-in Drum (although Drum has no need for, and does not use the
+in {\DRUM} (although {\DRUM} has no need for, and does not use the
 \verb|DMem_S| speculative interfaces).  Thus, in a system context, we
-can directly substitute Drum for Fife and vice versa.  Generalizing
+can directly substitute {\DRUM} for {\FIFE} and vice versa.  Generalizing
 this idea, we can develop other CPUs and substitute them, as well.
 
 We next go through the code for the individual stage modules.
@@ -87,14 +87,14 @@ We next go through the code for the individual stage modules.
 
 \label{Sec_Fife_connections}
 
-Section~\ref{Sec_connecting_separately_compiled_stages} and
-Figure~\ref{Fig_Fife_connections} discussed a technique to connect
-FIFO-like connections between separately compiled stage modules,
-illustrated in Figure~\ref{Fig_Fife_connections}.
+Section~\ref{Sec_connecting_separately_compiled_stages} discussed a
+technique to connect FIFO-like connections between separately compiled
+stage modules (we repeat Figure~\ref{Fig_Composed_FIFO_modularity_1}
+here for reference):
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in]{Fig_Composed_FIFO_modularity}}
   \caption{\label{Fig_Fife_connections}
-           How we connect Fife stages}
+           How we connect {\FIFE} stages}
 \end{figure}
 
 \begin{itemize}
@@ -115,13 +115,13 @@ illustrated in Figure~\ref{Fig_Fife_connections}.
 
 \end{itemize}
 
-The benefits of this technique are discussed in
+The benefits of this technique are discussed in detail in
 Section~\ref{Sec_SpecialFIFOs}.  Suffice it to say, here, that:
 
 \begin{tightlist}
 
  \item Despite there being two FIFOs, data can traverse from producer
-       to consumer in 1 tick, as desired.
+       to consumer in one clock tick, as desired.
 
  \item The structure allows the producer and consumer to be compiled
        independently by \emph{bsc}, with no ``rule-scheduling''
@@ -155,14 +155,18 @@ The Fetch stage module code is shown below.
 
 \SHOWCODE{Code_Extracts/Fife_mkFetch.tex}
 
-The STATE section instantiates various registers and FIFOs.  Next, the
-BEHAVIOR section contains two \emph{rules} (Chapter~\ref{ch_Rules_I}).
-In rule \verb|rl_Fetch_req|, the explicit condition is the expression:
+The STATE section instantiates various registers and FIFOs.  Ignore
+\verb|rg_runstate| for now, it is only used by a hardware debugger for
+halting the CPU.
+
+Next, the BEHAVIOR section contains two \emph{rules}
+(Chapter~\ref{ch_Rules_I}).  In rule \verb|rl_Fetch_req|, the explicit
+condition is the expression:
 
 \hm {\footnotesize \verb|(rg_running && (! f_F_from_Retire.notEmpty))|}
 
-Rule \verb|rl_Fetch_req|'s implicit condition comes from the methods
-that it invokes, \verb|f_Fetch_to_Decode.enq ()| and
+The implicit condition of rule \verb|rl_Fetch_req|'s comes from the
+methods that it invokes, namely \verb|f_Fetch_to_Decode.enq ()| and
 \verb|f_Fetch_to_IMem.enq ()|.  The rule will fire only when the
 explicit condition is true, and when both FIFOs are enabled to enqueue
 (have space).  When it fires, it performs the composite action that
@@ -177,30 +181,28 @@ comprises all the actions in the rule body:
 
  \item write the predicted PC value \verb|pred_pc| into register \verb|rg_pc|, and
 
- \item write the value of \verb|rg_inum+1| into the register \verb|rg_inum|.
-
 \end{itemize}
 
-The right-hand side expressions (\verb|rg_pc+4|, \verb|fn_Fetch(...)| and
-\verb|rg_inum+1|) are all combinational circuits, and ``\verb|y|'' is
-not a register, just a name for the wires carrying the output value of
-\verb|fn_Fetch()|.
+The right-hand side expressions (\verb|rg_pc+4| and
+\verb|fn_Fetch(...)| are all combinational circuits, and ``\verb|y|''
+is not a register, just a name for the wires carrying the output value
+of \verb|fn_Fetch()|.
 
 % ----------------
 
 \vspace{1ex}
 
-NOTE: \fbox{\small
-\begin{minipage}{5in}
+NOTE: \fbox{\footnotesize
+\begin{minipage}{0.9\textwidth}
 
 The function {\tt fn\_Fetch()} is exactly the same as the one used in
-the Fetch stage of Drum (was described in Section~\ref{Sec_fn_Fetch}).
+the Fetch stage of {\DRUM} (was described in Section~\ref{Sec_fn_Fetch}).
 
 \vspace{1ex}
 
 The types of the messages passed to the Decode stage ({\tt y.to\_D} of
 type {\tt F\_to\_D}) and to memory ({\tt y.mem\_req} of type {\tt
-Mem\_Req}) are the same as in Drum.
+Mem\_Req}) are the same as in {\DRUM}.
 
 \end{minipage}}
 
@@ -223,7 +225,7 @@ receives, in \verb|x|, a redirection message from the Retire stage,
 and updates the PC and epoch accordingly.  This rule has no explicit
 conditions; its single implicit condition comes from
 \verb|f_Fetch_from_Retire|'s implicit condition that we cannot pop a
-value from the FIFO until it is non-empty, {\ie}, this rule only fires
+value from the FIFO until it is non-empty, {\ie} this rule only fires
 when a redirection message is available.  When it fires, it performs
 three actions atomically/instantaneously/simultaneously:
  
@@ -239,7 +241,7 @@ three actions atomically/instantaneously/simultaneously:
 Note, \verb|rl_Fetch_from_Retire| updates two registers \verb|rg_pc|
 and \verb|rg_epoch| and, \emph{concurrently}, \verb|rl_Fetch| reads
 both those registers.  Because rule actions are atomic, we are
-guaranteed that \verb|rl_Fetch| will not see inconsitent values in
+guaranteed that \verb|rl_Fetch| will not see inconsistent values in
 those two registers, where one has been updated but the other has not
 yet been updated.
 
@@ -312,7 +314,7 @@ the rule fires, it:
 
  \item applies function \verb|fn_Decode()| to those values (this is
        the \emph{same} \verb|fn_Decode()| that was used in the Decode
-       stage of Drum, and described in Section~\ref{Sec_fn_Decode}),
+       stage of {\DRUM}, and described in Section~\ref{Sec_fn_Decode}),
        and
 
  \item sends the result $y$ of type \verb|Decode_to_RR| on to the
@@ -569,7 +571,7 @@ Execute stage each instruction only \emph{uses} these values if the
 instruction has an rs1 and/or rs2.
 
 Next, we apply the function \verb|fn_Dispatch()| (discussed in
-Section~\ref{Sec_fn_Dispatch}, and is the same one we use in Drum) to
+Section~\ref{Sec_fn_Dispatch}, and is the same one we use in {\DRUM}) to
 the inputs, which computes \verb|y|, containing the structs to be sent
 on the direct path (\verb|y.to_Retire|), to Execute Control
 (\verb|y.to_Control|), and to Execute Int and Execute DMem
@@ -638,7 +640,7 @@ The Execute Control stage module is shown below:
 After instantiating the forward flow input and output FIFOs, the rule
 \verb|rl_EX_Control| simply applies the function \verb|fn_Control| to
 each input and enqueues the output.  This function was described in
-Section~\ref{Sec_fn_EX_Control}, and is the same one we use in Drum.
+Section~\ref{Sec_fn_EX_Control}, and is the same one we use in {\DRUM}.
 Finally, the interface, after the \verb|init| method, simply lifts the
 FIFO interfaces to the interface of this module.
 
@@ -664,7 +666,7 @@ The Execute Integer stage module is shown below:
 After instantiating the forward flow input and output FIFOs, the rule
 \verb|rl_EX_Int| simply applies the function \verb|fn_EX_Int| to each
 input and enqueues the output.  This function was described in
-Section~\ref{Sec_fn_EX_Int}, and is the same one we use in Drum.
+Section~\ref{Sec_fn_EX_Int}, and is the same one we use in {\DRUM}.
 Finally, the interface, after the \verb|init| method, simply lifts the
 FIFO interfaces to the interface of this module.
 
@@ -684,7 +686,7 @@ response.
 
 % ****************************************************************
 
-\section{Fife: the Retire stage}
+\section{{\FIFE}: the Retire stage}
 
 \label{Sec_Fife_Retire_code}
 
@@ -694,7 +696,7 @@ many possible cases as outlined in Figure~\ref{Fig_Fife_Retire_2}
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_Retire_Layers_1_2}}
   \caption{\label{Fig_Fife_Retire_2}
-           Actions in the ``Retire'' stage of Fife
+           Actions in the ``Retire'' stage of {\FIFE}
 	   (same as Fig.~\ref{Fig_Fife_Retire})}
 \end{figure}
 
@@ -718,7 +720,7 @@ green arrow carrying Register-Writes to the \verb|RR_RW| module.
 
 This module has a mixture of modes.  Normally it is in pipeline mode,
 receiving instructions from the Execute stages and retiring them.  In
-certain circumstances, it goes into FSM mode, similar to Drum:
+certain circumstances, it goes into FSM mode, similar to {\DRUM}:
 
 \begin{tightlist}
 
@@ -837,7 +839,7 @@ instruction (epoch is correct), is a Direct-path instruction, is not
 an exception, and is indeed a CSRRxx instruction.
 
 If so, it applies \verb|csrs.csrrxx()| (described in
-Section~\ref{Sec_RISCV_CSRs}, and the same one we used in Drum), and
+Section~\ref{Sec_RISCV_CSRs}, and the same one we used in {\DRUM}), and
 updates the rd register with the result.
 
 If the CSRRxx operation did not raise an exception, it redirects Fetch
@@ -968,7 +970,7 @@ The following rule handles LUI, AUIPC and Integer instructions that
 arrive on the Execute Integer path.  Note, none of these standard
 RISC-V instructions raise any exceptions.  However, in this rule we
 assume the possibility of an instruciton in case, in future, we extend
-Fife's supported ISA with new non-standard Integer instructions that
+{\FIFE}'s supported ISA with new non-standard Integer instructions that
 could raise an exception.
 
 \SHOWCODE{Code_Extracts/Fife_S5_Int.tex}
@@ -1147,7 +1149,7 @@ pipeline processing in \verb|MODE_PIPE|.
 
 % ================================================================
 
-\subsection{Fife module interface definition}
+\subsection{{\FIFE} module interface definition}
 
 The final INTERFACE section, as with other modules, has an \verb|init|
 method, and then lifts the various FIFO interfaces into sub-interfaces
@@ -1159,11 +1161,11 @@ for this module.
 
 \section{Conclusion}
 
-And that is the complete Fife CPU!  There is actually very little in
+And that is the complete {\FIFE} CPU!  There is actually very little in
 this chapter that is RISC-V specific; these pipeline structures are
 needed for a pipelined CPU for \emph{any} ISA.  All our
 RISC-V-specific discussions were completed in the chapters leading up
-to Drum, and here we have simply reused all those RISC-V-specific
+to {\DRUM}, and here we have simply reused all those RISC-V-specific
 common functions.
 
 There is quite a lot of scope for performance optimization here, even

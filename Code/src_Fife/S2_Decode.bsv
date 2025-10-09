@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package S2_Decode;
 
@@ -49,8 +49,8 @@ Integer verbosity = 0;
 module mkDecode (Decode_IFC);
    // ================================================================
    // STATE
-   Reg #(File) rg_flog <- mkReg (InvalidFile);    // debugging
-
+   Reg #(File) rg_flog <- mkReg (InvalidFile);    // debugging          // \belide{3}
+                                                                        // \eelide
    // Forward flows in
    // Depth should be > F=>IMem=>D path latency
    FIFOF #(Fetch_to_Decode)  f_Fetch_to_Decode <- mkSizedFIFOF (4);
@@ -69,11 +69,10 @@ module mkDecode (Decode_IFC);
       Decode_to_RR y <- fn_Decode (x, rsp_IMem, rg_flog);
 
       f_Decode_to_RR.enq (y);
-
-      log_Decode (rg_flog, y, rsp_IMem);                                // \belide{6}
-                                                                        // \eelide
+                                                                        // \belide{6}
+      log_Decode (rg_flog, y, rsp_IMem);                                // \eelide
    endrule
-
+                                                                        // \belide{3}
    // Debugger support
    rule rl_Decode_halting (f_Fetch_to_Decode.first.halt_sentinel);
       f_Fetch_to_Decode.deq;
@@ -81,13 +80,11 @@ module mkDecode (Decode_IFC);
       y.epoch         = f_Fetch_to_Decode.first.epoch;
       y.halt_sentinel = True;
       f_Decode_to_RR.enq (y);
-                                                                        // \belide{6}
       log_Decode (rg_flog, y, unpack (0));
       if (verbosity != 0)
 	 $display ("S2_Decode: halt requested; sending halt_sentinel to S3_RR_RW_Dispatch");
-                                                                        // \eelide
    endrule
-
+                                                                        // \eelide
    // ================================================================
    // INTERFACE
 
