@@ -82,7 +82,7 @@ module mkDecode (Decode_IFC);
       f_Decode_to_RR.enq (y);
       log_Decode (rg_flog, y, unpack (0));
       if (verbosity != 0)
-	 $display ("S2_Decode: halt requested; sending halt_sentinel to S3_RR_RW_Dispatch");
+	 $display ("S2_Decode: halt requested; sending halt_sentinel to S3_RR");
    endrule
                                                                         // \eelide
    // ================================================================

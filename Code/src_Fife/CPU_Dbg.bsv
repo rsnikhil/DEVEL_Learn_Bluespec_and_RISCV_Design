@@ -69,9 +69,9 @@
       if (verbosity_CPU_Dbg != 0)
 	 $display ("CPU_Dbg.stmt_rw_gpr");
       if ((pkt_in.rw_op == Dbg_RW_READ) && (pkt_in.rw_addr < 32))
-	 rg_data <= stage_RR_RW.gpr_read (truncate (pkt_in.rw_addr));
+	 rg_data <= stage_RR_WB.gpr_read (truncate (pkt_in.rw_addr));
       else if (pkt_in.rw_addr < 32)
-	 stage_RR_RW.gpr_write (truncate (pkt_in.rw_addr), pkt_in.rw_wdata);
+	 stage_RR_WB.gpr_write (truncate (pkt_in.rw_addr), pkt_in.rw_wdata);
       action
 	 let rsp = Dbg_from_CPU_Pkt {pkt_type: ((pkt_in.rw_addr < 32)
 						? Dbg_from_CPU_RW_OK

@@ -1,4 +1,4 @@
-// Copyright (c) 2023-2024 Rishiyur S. Nikhil.  All Rights Reserved.
+// Copyright (c) 2023-2025 Rishiyur S. Nikhil.  All Rights Reserved.
 
 package S5_Retire;
 
@@ -330,7 +330,7 @@ module mkRetire (Retire_IFC);
       rg_runstate <= S5_HALTED;
 
       if (verbosity != 0)
-	 $display ("CPU.S5: received halt_sentinel from S3_RR_RW_Dispatch");
+	 $display ("CPU.S5: received halt_sentinel from S3_RR");
       $display ("CPU.S5: HALTED");
    endrule
 
