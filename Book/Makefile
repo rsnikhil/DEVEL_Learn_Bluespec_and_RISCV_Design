@@ -41,10 +41,11 @@ SOURCES = \
 		ch140/ch_Drum_Rules.tex \
 		ch150/ch_Fife_Principles.tex \
 		ch160/ch_Fife_Code.tex \
-		ch170/ch_Rules_II.tex \
-		ch180/ch_Optimization.tex \
-		ch190/ch_BSV_Further_Study.tex \
-		ch200/ch_RISCV_Further_Study.tex \
+		ch170_PBT/ch_PBT.tex \
+		ch180_CRegs/ch_Rules_II.tex \
+		ch190_Opt_Fife_Drum/ch_Optimization.tex \
+		ch200_BSV_Further_Study/ch_BSV_Further_Study.tex \
+		ch210_RISCV_Further_Study/ch_RISCV_Further_Study.tex \
 		ch800_apx_resources/apx_resources.tex \
 		ch850_apx_Why_BSV/apx_Why_BSV.tex \
 		ch850_apx_Why_BSV/apx_Why_BSV.tex \

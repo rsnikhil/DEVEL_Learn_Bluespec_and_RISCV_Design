@@ -167,13 +167,26 @@ Of course, simulation ({\BLUESIM} or Verilog) runs much more slowly
 and so simulation is useful primarily for early debugging and analysis
 of the design while running small RISC-V programs.
 
-In Chapters~\ref{ch_BSV_verification}, \ref{ch_RISCV_verification},
-and \ref{ch_Optimization} we discuss debugging and optimization of our
-RISC-V designs, in particular using \emph{traces} that are generated
-during simulation.  We will also discuss a semi-formal mechanism
-called {\PBT}, or Property-Based Testing, to verify the
-CPUs.\footnote{{\PBT} is the generic name for tools like Haskell's
-\emph{QuickCheck} (\url{https://en.wikipedia.org/wiki/QuickCheck}).}
+In Chapters~\ref{ch_BSV_verification} and \ref{ch_RISCV_verification},
+respectively, we discuss debugging and verification of {\BSV} designs
+in general, and CPUs in particular.  These are based on \emph{traces}
+that are generated during simulation.
+
+In Chapter~\ref{ch_PBT} we discuss a semi-formal mechanism called
+{\PBT}, or Property-Based Testing, to verify designs.\footnote{{\PBT}
+is the generic name for tools like Haskell's \emph{QuickCheck}
+(\url{https://en.wikipedia.org/wiki/QuickCheck}).}  The general
+principles of {\PBT} are incorporated in a RISC-V CPU-specific testing
+framework called {\TESTRIG}, also discussed in this chapter.
+
+In Chapter~\ref{ch_Rules_II} we discuss {\BSV}'s ``CRegs''
+(``Concurrent Registers'') which provide a principled way to ``fuse''
+separate rules so that they can execute in a single clock, where
+previously those rules could only execute in separate clocks.  This
+plays a central role in optimization of our RISC-V designs, for
+example to reduce the latency between register read and write, PC
+redirection and resumption, {\etc}.  These techniques are described in
+Chapter~\ref{ch_Optimization}.
 
 We will discuss how to process our Verilog RTL through an FPGA
 synthesis tool to create an FPGA bitfile which can then be loaded into
