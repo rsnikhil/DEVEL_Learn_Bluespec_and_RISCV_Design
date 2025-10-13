@@ -12,7 +12,6 @@ FIGS += Fig_BSV_whats_in_an_interface_decl.png
 FIGS += Fig_BSV_whats_in_an_interface_def.png
 FIGS += Fig_BSV_whats_in_a_module_decl.png
 FIGS += Fig_BSV_whats_in_a_rule.png
-FIGS += Fig_Chapter_Roadmap.png
 FIGS += Fig_Clock.png
 FIGS += Fig_Combo_Is_Legal_BRANCH.png
 FIGS += Fig_Combo_Multiplexer.png
@@ -39,8 +38,6 @@ FIGS += Fig_J_imm.png
 FIGS += Fig_JAL_JALR.png
 FIGS += Fig_LUI.png
 FIGS += Fig_Mem_Hierarchy.png
-FIGS += Fig_Retire_Layers_1.png
-FIGS += Fig_Retire_Layers_1_2.png
 FIGS += Fig_RISCV_Fuse_Decode_RR.png
 FIGS += Fig_Rule_Actions_1.png
 FIGS += Fig_Rule_Actions_1_2.png
@@ -84,6 +81,14 @@ FIGS += RSN_2025-10-07.000.00_Scoreboard.png
 
 # FIGS += Fig_RISCV_Retire_Ordering.png
 FIGS += RSN_2025-10-07.001.00_Concurrent_Exec_Pipes.png
+
+# FIGS += Fig_Chapter_Roadmap.png
+FIGS += RSN_2025-10-13.000.00_Learn_Chapter_Roadmap.png
+
+# FIGS += Fig_Retire_Layers_1.png
+# FIGS += Fig_Retire_Layers_1_2.png
+FIGS += RSN_2025-10-13.001.00_Fife_Retire_L1.png
+FIGS += RSN_2025-10-13.001.00_Fife_Retire_L1_L2.png
 
 .PHONY: help
 help:

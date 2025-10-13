@@ -1,7 +1,7 @@
 .PHONY: help
 help:
 	@echo "Targets:"
-	@echo "  TestRIG_setup.pdf"
+	@echo "  Build_and_Run_Guide.html"
 	@echo ""
 	@echo "  help          show this help text"
 	@echo "  all           $(ALL)"
