@@ -22,7 +22,6 @@ FIGS += Fig_Combo_path_in_mkBypassFIFOF.png
 FIGS += Fig_Composed_FIFO_Producer_Consumer.png
 FIGS += Fig_Composed_FIFO_modularity.png
 FIGS += Fig_CPU_Simulation.png
-FIGS += Fig_CPU_Verif_Complexity.png
 FIGS += Fig_Credit_Based_Flow_Control.png
 FIGS += Fig_CReg_HW.png
 FIGS += Fig_CReg_BSV.png
@@ -44,7 +43,6 @@ FIGS += Fig_Rule_Actions_1_2.png
 FIGS += Fig_Rule_Actions_Controlled.png
 FIGS += Fig_Rule_Structure.png
 FIGS += Fig_RV32I_labeled.png
-FIGS += Fig_tandem_verification.png
 FIGS += Fig_tandem_verification_II.png
 FIGS += Fig_Testbench_DUT.png
 FIGS += Fig_Topics.png
@@ -89,6 +87,12 @@ FIGS += RSN_2025-10-13.000.00_Learn_Chapter_Roadmap.png
 # FIGS += Fig_Retire_Layers_1_2.png
 FIGS += RSN_2025-10-13.001.00_Fife_Retire_L1.png
 FIGS += RSN_2025-10-13.001.00_Fife_Retire_L1_L2.png
+
+# FIGS += Fig_CPU_Verif_Complexity.png
+FIGS += RSN_2025-10-15.000.00_CPU_Verif_Complexity.png
+
+# FIGS += Fig_tandem_verification.png
+FIGS += RSN_2025-10-15.001.00_Symmetric_Tandem_Verification.png
 
 .PHONY: help
 help:

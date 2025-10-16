@@ -35,6 +35,10 @@ function Bit #(3) instr_funct3 (Bit #(32) instr);       // \blatex{instr_funct3}
    return instr [14:12];
 endfunction                                             // \elatex{instr_funct3}
 
+function Bit #(5) instr_funct5 (Bit #(32) instr);
+   return instr [31:27];
+endfunction
+
 function Bit #(7) instr_funct7 (Bit #(32) instr);
    return instr [31:25];
 endfunction
@@ -231,7 +235,7 @@ Bit #(5) funct5_INVAL   = 5'b_00111;
 
 function Bool is_legal_AMO (Bit #(32) instr);
    let funct3 = instr_funct3 (instr);
-   let funct5 = instr [31:27];
+   let funct5 = instr_funct5 (instr);
    return ((instr_opcode (instr) == opcode_AMO)
 	   && (  (funct3 == funct3_W)
 	      || ((funct3 == funct3_D) && (xlen == 64)))
@@ -490,7 +494,7 @@ function Bool is_FENCE_I (Bit #(32) instr);
 endfunction
 
 function Bool is_LR (Bit #(32) instr);
-   return (is_AMO (instr) && (instr [31:27] == funct5_LR));
+   return (is_AMO (instr) && (instr_funct5 (instr) == funct5_LR));
 endfunction
 
 function Bool is_OP (Bit #(32) instr);

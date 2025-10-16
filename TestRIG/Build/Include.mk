@@ -3,27 +3,18 @@
 .PHONY: help
 help:
 	@echo "Available targets:"
-	@echo "  b_compile b_link         bsc-compile and link for Bluesim"
-	@echo "  v_compile v_link         bsc-compile and link for Verilator"
+	@echo "  b_compile b_link b_run   bsc-compile, link and run for Bluesim"
+	@echo "  v_compile v_link v_run   bsc-compile, link and run for Verilator"
 	@echo ""
-	@echo "  b_run         /v_run             run exe on test_memhex64, generating log.txt"
-	@echo "  b_run_hello   /v_run_hello       ... on 'Hello World!' test"
-	@echo "  b_run_add     /v_run_add         ... on 'add' ISA test"
-	@echo "  b_run_FreeRTOS/v_run_FreeRTOS    ... on 'FreeRTOS' test"
-	@echo ""
-	@echo "  b_all = b_compile b_link b_run_hello"
-	@echo "  v_all = v_compile v_link v_run_hello"
-	@echo ""
-	@echo "  csv                      Create CSV file from log.txt for pipeline visualization."
-	@echo "                           Then, load the CSV file into any spreadsheet"
-	@echo "                           such as: Excel, Numbers, OpenOffice, ...)"
+	@echo "  b_all = b_compile b_link b_run"
+	@echo "  v_all = v_compile v_link v_run"
 	@echo ""
 	@echo "  clean                    Remove temporary intermediate files"
 	@echo "  full_clean               Restore to pristine state"
 
 .PHONY: all
-b_all: b_compile b_link b_run_hello
-v_all: v_compile v_link v_run_hello
+b_all: b_compile b_link b_run
+v_all: v_compile v_link v_run
 
 # ****************************************************************
 # Config
@@ -103,38 +94,11 @@ v_link: build_v verilog
 		$(C_FILES)
 	@echo "Linking for Verilog simulation finished"
 
-# ----------------
-# Verilator runs
-
 .PHONY: v_run
 v_run:
 	@echo "INFO: Simulation ..."
 	./$(EXEFILE)_verilator
 	@echo "INFO: Finished Simulation"
-
-.PHONY: v_run_hello
-v_run_hello:
-	@echo "INFO: Simulation of Hello World! ..."
-	ln -s -f ../../Tools/Hello_World_Example_Code/hello.RV32.bare.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_verilator
-	@echo "INFO: Finished Simulation of Hello World! ..."
-
-.PHONY: v_run_add
-v_run_add:
-	@echo "INFO: Simulation of add ISA test ..."
-	ln -s -f ../../Tools/rv32ui-p-add_Example_Code/rv32ui-p-add.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_verilator
-	@echo "INFO: Finished Simulation of add ISA test ..."
-
-.PHONY: v_run_FreeRTOS
-v_run_FreeRTOS:
-	@echo "INFO: Simulation of FreeRTOS ..."
-	ln -s -f ../../Tools/FreeRTOS/RTOSDemo.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_verilator
-	@echo "INFO: Finished Simulation of FreeRTOS ..."
 
 # ****************************************************************
 # FOR BLUESIM
@@ -166,44 +130,11 @@ b_link: build_b C_for_bsim
 		$(BSC_C_FLAGS)  $(C_FILES)
 	@echo Linking for Bluesim finished
 
-# ----------------
-
 .PHONY: b_run
 b_run:
 	@echo "INFO: Simulation ..."
 	./$(EXEFILE)_bsim
 	@echo "INFO: Finished Simulation"
-
-.PHONY: b_run_hello
-b_run_hello:
-	@echo "INFO: Simulation of Hello World! ..."
-	ln -s -f ../../Tools/Hello_World_Example_Code/hello.RV32.bare.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_bsim
-	@echo "INFO: Finished Simulation of Hello World! ..."
-
-.PHONY: b_run_add
-b_run_add:
-	@echo "INFO: Simulation of add ISA test ..."
-	ln -s -f ../../Tools/rv32ui-p-add_Example_Code/rv32ui-p-add.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_bsim
-	@echo "INFO: Finished Simulation of add ISA test ..."
-
-.PHONY: b_run_FreeRTOS
-b_run_FreeRTOS:
-	@echo "INFO: Simulation of FreeRTOS ..."
-	ln -s -f ../../Tools/FreeRTOS/RTOSDemo.memhex32 \
-		test.memhex32
-	./$(EXEFILE)_bsim
-	@echo "INFO: Finished Simulation of FreeRTOS ..."
-
-# ****************************************************************
-# Create CSV file of first 100 instructions for viewing in any spreadsheet
-
-.PHONY: csv
-csv:
-	$(REPO)/Tools/Log_to_CSV/Log_to_CSV.py  log.txt  0 100
 
 # ****************************************************************
 

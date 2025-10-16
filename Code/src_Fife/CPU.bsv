@@ -36,8 +36,8 @@ import CPU_IFC     :: *;
 import S1_Fetch      :: *;
 import S2_Decode     :: *;
 
-// import S3_RR_S6_WB   :: *;    // Without bypassing
-import S3_RR_S6_WB_bypassed :: *;       // With bypassing
+import S3_RR_S6_WB   :: *;    // Without bypassing
+// import S3_RR_S6_WB_bypassed :: *;       // With bypassing
 
 import S4_EX_Control :: *;
 import S4_EX_Int     :: *;
