@@ -1,0 +1,97 @@
+% -*- mode: fundamental -*-
+
+% Copyright (c) 2025 Rishiyur S. Nikhil, All Rights Reserved
+
+% Preamble that is shareable across slide decks
+
+\documentclass[10pt, aspectratio=169]{beamer}
+
+% \documentclass[17pt]{beamer}
+
+% Avail. font sizes: 8pt, 9pt, 10pt, 11pt, 12pt, 14pt, 17pt, 20pt.
+% Default font size is 11pt (= 22pt in full screen mode).
+
+\usepackage{verbatim}
+\usepackage{fancyvrb}
+
+% ================================================================
+% Themes
+
+\usetheme{Madrid}          % Line at bottom: Author (affiliation), OptTitle, Conf, page 
+
+% \usetheme{Copenhagen}    % Same as Madrid except bottom line: Author, OptTitle
+
+% \usetheme{Berkeley}    % Takes up 1-inch border on left and top
+
+% ----------------
+% colorthemes
+% (default), beaver, beetle, seahorse, wolverine
+
+\usecolortheme{seahorse}
+
+% ================================================================
+% Customization: show table of contents before each section
+% Use \AtBeginSubsection    to show before each subsection
+
+% \AtBeginSection[]
+% {
+%   \begin{frame}
+%     \frametitle{Table of Contents}
+%     \tableofcontents[currentsection]
+%   \end{frame}
+% }
+
+% ================================================================
+
+% ----------------
+% ITALICISE WORDS
+\newcommand{\ie}{\emph{i.e.,}}
+\newcommand{\eg}{\emph{e.g.,}}
+\newcommand{\Eg}{\emph{E.g.,}}
+\newcommand{\etc}{\emph{etc.}}
+\newcommand{\via}{\emph{via}}
+\newcommand{\vs}{\emph{vs.}}
+
+% ----------------
+% EMPTY BOXES OF VARIOUS WIDTHS, FOR INDENTATION
+\newcommand{\hm}{\hspace*{1em}}
+\newcommand{\hmm}{\hspace*{2em}}
+\newcommand{\hmmm}{\hspace*{3em}}
+\newcommand{\hmmmm}{\hspace*{4em}}
+
+% ----------------
+% Convenient widths
+
+\newlength{\hlessmmm}
+\setlength{\hlessmmm}{\textwidth}
+\addtolength{\hlessmmm}{-3em}
+
+\newlength{\hlessmmmm}
+\setlength{\hlessmmmm}{\textwidth}
+\addtolength{\hlessmmmm}{-4em}
+
+% ----------------
+% STRUTS
+% HORIZONTAL STRUT.  One argument (width).
+\newcommand{\hstrut}[1]{\hspace*{#1}}
+% VERTICAL STRUT. Two arguments (offset from baseline, height).
+\newcommand{\vstrut}[2]{\rule[#1]{0in}{#2}}
+% ----------------
+% ``TIGHTLIST'' ENVIRONMENT (no para space betwee items, small indent)
+\newenvironment{tightlist}%
+{\begin{list}{$\bullet$}{%
+    \setlength{\topsep}{0in}
+    \setlength{\partopsep}{0in}
+    \setlength{\itemsep}{0in}
+    \setlength{\parsep}{0in}
+    \setlength{\leftmargin}{1.5em}
+    \setlength{\rightmargin}{0in}
+    \setlength{\itemindent}{0in}
+}
+}%
+{\end{list}
+}
+% ----------------
+
+% End of preamble
+% ****************************************************************

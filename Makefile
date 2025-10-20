@@ -2,15 +2,15 @@
 
 # ================================================================
 
+DEVEL   = $(HOME)/Git/DEVEL_Learn_Bluespec_and_RISCV_Design
 RELEASE = $(HOME)/Git/Learn_Bluespec_and_RISCV_Design
-TODAY   = `date -Idate`
 
 .PHONY: help
 help:
 	@echo "This Makefile is for creating the BSV/Fife/Drum book release in:"
 	@echo "    RELEASE = $(RELEASE)"
-	@echo "    TODAY   = $(TODAY)"
 	@echo "It copies items from this DEVEL dir to RELEASE."
+	@echo "    DEVEL   = $(DEVEL)"
 	@echo ""
 	@echo "Targets:"
 	@echo "  Book       Copy  $(BOOK_PDF)  to  RELEASE/Book"
@@ -29,12 +29,12 @@ help:
 # ================================================================
 # Book
 
-BOOK_PDF = ./Book/Book_BLang_RISCV.pdf
+BOOK_PDF = Book_BLang_RISCV.pdf
 
 .PHONY: Book
 Book:
 	@echo "---------------- Copying book PDF"
-	cp -p  $(BOOK_PDF)  $(RELEASE)/
+	cp -p  $(DEVEL)/Book/(BOOK_PDF)  $(RELEASE)/
 
 # ================================================================
 # Code, tools, etc.
@@ -68,17 +68,14 @@ Code:
 	@echo ""
 	@echo "---------------- Copying Fife/Drum code to $(RELEASE)/Code/"
 	@echo "---- Cleaning up .o files, in ./Code "
-	rm -f Code/src_*/*.o
-	rm -f Code/vendor/*/*.o
+	rm -f $(DEVEL)/Code/src_*/*.o
+	rm -f $(DEVEL)/Code/vendor/*/*.o
 	@echo "---- tar up files to be copied, in ./Code "
-	cd Code; tar -cvzf $(HOME)/foo.tar.gz  $(FIFE_SRCS)
+	cd $(DEVEL)/Code; tar -cvzf $(HOME)/foo.tar.gz  $(FIFE_SRCS)
 	@echo ""
-	@echo "---- Save  Code/  to  Code_$(TODAY)/, in $(RELEASE)"
-	cd $(RELEASE); mv Code Code_$(TODAY)
-	@echo ""
-	@echo "---- Unpack tar file/, in $(RELEASE)/Code"
-	cd $(RELEASE); mkdir -p Code; cd Code; tar -xvzf $(HOME)/foo.tar.gz; Strip_LaTeX.py  .
-	@echo "Copied Fife/Drum code to $(RELEASE)/Code/"
+	@echo "---- Unpack tar file into $(RELEASE)/Code_Candidate/"
+	cd $(RELEASE); rm -r -f Code_Candidate; mkdir -p Code_Candidate; cd Code_Candidate; tar -xvzf $(HOME)/foo.tar.gz; Strip_LaTeX.py  .
+	@echo "Copied Fife/Drum code to $(RELEASE)/Code_Candidate/"
 
 # ================================================================
 # TestRIG
@@ -101,17 +98,14 @@ TESTRIG_SRCS += vendor
 TestRIG:
 	@echo "---------------- Copying TestRIG code to $(RELEASE)/TestRIG/"
 	@echo "---- Cleaning up .o files, in ./TestRIG "
-	rm -f TestRIG/src_*/*.o
-	rm -f TestRIG/vendor/*/*.o
+	rm -f $(DEVEL)/TestRIG/src_*/*.o
+	rm -f $(DEVEL)/TestRIG/vendor/*/*.o
 	@echo "---- tar up files to be copied, in ./TestRIG "
 	cd $(TESTRIG_DIR); tar -cvzf $(HOME)/foo.tar.gz  $(TESTRIG_SRCS)
 	@echo ""
-	@echo "---- Save  TestRIG/  to  TestRIG_$(TODAY)/, in $(RELEASE)"
-	cd $(RELEASE); mv TestRIG TestRIG_$(TODAY)
-	@echo ""
-	@echo "---- Unpack tar file/, in $(RELEASE)/TestRIG"
-	cd $(RELEASE); mkdir -p Testrig; cd TestRIG; tar -xvzf $(HOME)/foo.tar.gz; Strip_LaTeX.py  .
-	@echo "Copied TestRIG code to $(RELEASE)/TestRIG/"
+	@echo "---- Unpack tar file into $(RELEASE)/TestRIG_Candidate/"
+	cd $(RELEASE); rm -r -f TestRIG_Candidate; mkdir -p TestRIG_Candidate; cd TestRIG_Candidate; tar -xvzf $(HOME)/foo.tar.gz; Strip_LaTeX.py  .
+	@echo "Copied TestRIG code to $(RELEASE)/TestRIG_Candidate/"
 
 # ================================================================
 
