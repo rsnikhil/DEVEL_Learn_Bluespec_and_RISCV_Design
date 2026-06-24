@@ -1,6 +1,7 @@
 *~
 .*~
 verilog
+obj_dir_exe_*
 exe_*
 log*
 Verilator_Make
