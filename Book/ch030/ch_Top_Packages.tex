@@ -76,7 +76,7 @@ immediately, returning an exit value of 0 to the operating system.
 Rules can normally execute repeatedly forever, but here the
 \verb|$finish()| terminates it after one execution (rules are
 discussed in more detail in Chapters~\ref{ch_Rules_I} and
-Chapters~\ref{ch_Rules_II}).
+\ref{ch_Rules_II}).
 
 % ----------------
 \vspace{1ex}
@@ -137,7 +137,7 @@ compiler, and then run the executable:
 In both the {\BLUESIM} and {\Verilator} cases, the ``\verb|-g|'' flag tells
 \emph{bsc} the name of the top-level module for which to generate
 code, ``\verb|-e|'' tells it which is the top-level module for
-simulation, and ``\verb|-e|'' tells it the desired name for the final
+simulation, and ``\verb|-o|'' tells it the desired name for the final
 executable.
 
 In {\BLUESIM} compile-link, ``\verb|-sim|'' tells \emph{bsim} that our
@@ -293,7 +293,7 @@ packages/files.  We create a new file \verb|DUT.bsv| that just defines
 some top-level scalar constants (strings, bit-vectors).
 
 {\footnotesize
-\begin{Verbatim}[frame=single, numbers=left, label=in file Ex\_04\_02/DUT.bsv]
+\begin{Verbatim}[frame=single, numbers=left, label=in file Ex-03-B-Top-and-DUT/DUT.bsv]
 package DUT;
 
 String title   = "The C Programming Language";
@@ -321,7 +321,7 @@ declares the variable to have that type and that value.
 Next, we extend our \verb|mkTop| module from the previous example:
 
 {\footnotesize
-\begin{Verbatim}[frame=single, numbers=left, label=in file Ex\_04\_02/Top.bsv]
+\begin{Verbatim}[frame=single, numbers=left, label=in file Ex-03-B-Top-and-DUT/Top.bsv]
 package Top;
 
 import DUT :: *;
@@ -331,6 +331,7 @@ module mkTop (Empty);
    rule rl_once;
       $display ("Hello, World!");
       $display ("  (From the book: %s", title);
+      $display ("   by:            %s", authors);
       $display ("   which was first published on: %4d-%02d-%02d)",
                 year, month, day);
       $finish (0);
@@ -349,7 +350,9 @@ defined in that package.  In the rule, we have added two more
 package.
 
 We can compile and link it for {\BLUESIM} using the \emph{bsc} compiler,
-and then run the executable:
+and then run the executable:\footnote{
+Note: Bluesim seems to print ``{\tt <space>2}'' for ``{\tt 02}''.
+}
 
 {\footnotesize
 \begin{Verbatim}[frame=single, numbers=left]
@@ -491,8 +494,8 @@ exporting:
 
 In the versions on the left the field names of the struct and the
 labels of the enum are also made visible; on the right, they are not.
-The latter case useful in defining a so-called ``\emph{abtract data
-type}'', {\ie} a type that is known outside the package but whose
+The latter case is useful for defining a so-called ``\emph{abtract
+data type}'', {\ie} a type that is known outside the package but whose
 internal details are hidden.
 
 Since an interface is just like a struct type, if we explicitly export
@@ -641,7 +644,8 @@ Let us extend our minimal {\BSV} program so that the DUT contains a
 module with an interface.
 
 {\footnotesize
-\begin{Verbatim}[frame=single, numbers=left, label=in file Ex\_04\_04/DUT.bsv]
+\begin{Verbatim}[frame=single, numbers=left,
+                 label=in file Ex-03-C-Module-and-Interface/DUT.bsv]
 package DUT;
 
 export DUT_IFC (..), mkDUT;
@@ -684,7 +688,8 @@ The module \verb|mkDUT| simply defines the two methods in its interface.
 Next, we modify our \verb|mkTop| module from the previous example:
 
 {\footnotesize
-\begin{Verbatim}[frame=single, numbers=left, label=in file Ex\_04\_04/Top.bsv]
+\begin{Verbatim}[frame=single, numbers=left,
+                 label=in file Ex-03-C-Module-and-Interface/Top.bsv]
 package Top;
 
 import DUT :: *;
@@ -933,8 +938,8 @@ traditional object-oriented programming languages:
  \item Each rule ``firing'' is \emph{atomic}---all its state updates
        are performed together, conceptually at the same instant, and
        semantically either before or after all other rule firings,
-       {\ie} there is never any interleaving of the actions in one
-       rule firing with the actions in another rule firing.
+       {\ie} there is never any interleaving of actions in one rule
+       with actions in another rule.
 
        Atomicity is the most powerful principle known in Computer
        Science for reasoning about correctness in the presence of

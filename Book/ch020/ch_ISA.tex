@@ -228,7 +228,7 @@ previous ISAs dating all the way back to the 1950s.
 
 An ISA is useless without a strong \emph{ecosystem} supporting the
 ISA.  This includes artefacts such as compilers, programming language
-implementqtions, debuggers, test and verification infrastructure,
+implementations, debuggers, test and verification infrastructure,
 embedded operating systems, real-time operating systems, workstation
 and server-class operating systems, boot loaders, device drivers, and
 so on.  It also includes services, such as tutorials, books, courses,
@@ -249,7 +249,7 @@ Section~\ref{Sec_ISA_Overview}).  It consists of a \emph{very} small
 Compressed instructions), and a systematic way of substituting or
 adding new, non-standard, proprietary extensions.  This makes it
 easier for an entrepreneur to ``tune'' the ISA for their proprietary
-impliementation aimed at a target market with specific requirements..
+implementation aimed at a target market with specific requirements.
 
 There is also a security dimension to RISC-V's attractiveness.  When a
 customer buys a silicon implementation of an ISA, they have to trust
@@ -398,7 +398,7 @@ and funct7 fields at other positions in the instruction.
 If the instruction reads at least one register, the first one is
 specified in the rs1 field (``register source 1''); the 5 bits in
 instr[15-19] specify one of the 31 registers.  If the instruction
-reads two register, the second one is specified in the rs2 field; the
+reads two registers, the second one is specified in the rs2 field; the
 5 bits in instr[24-20] specify one of the 31 registers.  If the
 instruction writes a register, it is specified in the rd field
 (``register destination''); the 5 bits in instr[11-7] specify one of
@@ -419,15 +419,17 @@ instruction are permuted, with a 0 bit appended to the right, to
 produce a 21-bit immediate value to be used in the computation.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_J_imm}}
-  \caption{\label{Fig_J_imm} Construction of 21-bit immediate from 20 ``imm'' bits in J-type instructions}
+  \caption{\label{Fig_J_imm}
+           Construction of 21-bit immediate from 20 ``imm'' bits in J-type instructions}
 \end{figure}
 
-Similarly, Figure~\ref{Fig_B_imm} shows how the 12 ``imm'' bits in the
-instruction are permuted, with a 0 bit appended to the right, to
-produce a 13-bit immediate value to be used in the computation.
+Similarly, Figure~\ref{Fig_B_imm} shows how the 12 ``imm'' bits in a
+B-type instruction are permuted, with a 0 bit appended to the right,
+to produce a 13-bit immediate value to be used in the computation.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=6in,angle=0]{Figures/Fig_B_imm}}
-  \caption{\label{Fig_B_imm} Construction of 13-bit immediate from 12 ``imm'' bits in B-type instructions}
+  \caption{\label{Fig_B_imm}
+           Construction of 13-bit immediate from 12 ``imm'' bits in B-type instructions}
 \end{figure}
 
 In both of the above, the encoding takes advantage of the fact that
@@ -473,9 +475,12 @@ Figure~\ref{Fig_LUI_AUIPC} reproduces the top of page 19 of the RISC-V
 Unprivileged ISA specification, which describes the semantics of the
 LUI and AUIPC instructions in prose text.
 \begin{figure}[htbp]
-  \centerline{\frame{\includegraphics[width=5in,angle=0]{Figures/Fig_LUI_AUIPC}}}
+% \centerline{\frame{\includegraphics[width=5in,angle=0]{Figures/Fig_LUI_AUIPC}}}
+  \centerline{\includegraphics[angle=0]{RSN_2026-06.004.00_RISCV_ISA_LUI_AUIPC}}
   \caption{\label{Fig_LUI_AUIPC} RISC-V LUI and AUIPC Instruction semantics}
 \end{figure}
+(Please ignore the first first two lines in the figure about the SRLI
+and SRAI instructions which are discussed in Section~\ref{sec:SRxI}.)
 
 Figure~\ref{Fig_LUI} is a pictorial depiction of the semantics of an LUI instruction.
 \begin{figure}[htbp]
@@ -563,10 +568,6 @@ The difference between LB and LBU is whether the 8 bits loaded (1
 byte) are sign-extended or zero-extended, respectively, to 32 bits
 when placed in the 32-bit rd. (And similarly for LH vs. LHU.)
 
-How to read the ISA spec: examples LOAD/STORE, Register-Register
-Arithmetic and Logic, Register-Immediate Arithmetic and Logic,
-Unconditional Jump.
-
 % ================================================================
 
 \subsection{Register-Register Arithmetic and Logic instructions}
@@ -597,6 +598,8 @@ only the lower 5 bits of register[rs2] are relevant ({\ie} bits
 % ================================================================
 
 \subsection{Register-Immediate Arithmetic and Logic instructions}
+
+\label{sec:SRxI}
 
 These instructions read register rs1, form a signed 32-bit value from
 the 12-bit ``imm'' bits, and perform the specified arithmetic/logic
@@ -671,8 +674,8 @@ contain caches in the memory system.  In such systems, data may not
 reach memory quickly or at all (is in the cache and is not evicted),
 and two items of data $x_1$ and $x_2$ may reach memory in a different
 order from the STORE instructions that wrote them (because the order
-in which their cache lines are written back to memory has no relation
-ship to the program STORE order).
+in which their cache lines are written back to memory has no
+relationship to the program STORE order).
 
 The FENCE instruction is often used to ``push'' data from the cache to
 memory, although technically the FENCE instruction only guarantees an
@@ -742,7 +745,7 @@ that location.
 
 Exception-cause codes relevant to this book (RV32I + exception
 handling) are shown in the table below (excerpted from Table 3.6 in
-the Privileged ISA Specfication document).
+the Privileged ISA Specification document).
 
 \begin{center}
  \begin{tabular}{|c|l|}

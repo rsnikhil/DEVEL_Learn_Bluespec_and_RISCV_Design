@@ -13,18 +13,32 @@ help:
 	@echo "    DEVEL   = $(DEVEL)"
 	@echo ""
 	@echo "Targets:"
-	@echo "  Book       Copy  $(BOOK_PDF)  to  RELEASE/Book"
-	@echo "  Code       In RELEASE move  Code/  to Code_TODAY;"
-	@echo "             then copy code, Makefiles, etc. to  RELEASE/Code/"
-	@echo "  TestRIG    In RELEASE move  TestRIG/  to  TestRIG_TODAY/;"
-	@echo "             then copy code, Makefiles, etc.to  RELEASE/TestRIG/"
-	@echo "  Slides     Copy slides PDFs from  $(BOOK)  to  ."
-	@echo "  Exercises  Copy exercises from  $(BOOK)  to  ."
+	@echo "  Book        Copy  $(BOOK_PDF)  to  RELEASE/Book"
+	@echo "  Code        Copy  DEVEL/Code/  to  RELEASE/Code_Candidate;"
+	@echo "                strip LaTeX tags; ready for test and manual copy to Code"
+	@echo "  TestRIG     In RELEASE move  TestRIG/  to  TestRIG_TODAY/;"
+	@echo "                then copy code, Makefiles, etc.to  RELEASE/TestRIG/"
+	@echo "  Slides      Copy slides PDFs from  $(BOOK)  to  ."
+	@echo "  Exercises   Copy exercises from  $(BOOK)  to  ."
+	@echo ""
+	@echo "  vsdiff, diff  Shows VScode diff or diff between X in DEVEL and RELEASE"
+	@echo "                (define X=path in 'make' invocation"
 	@echo ""
 	@echo "  clean       Remove temporary intermediate files"
 	@echo "  full_clean  clean; and also remove .html"
 	@echo ""
 	@echo "Please rm any build-temporaries, including .o files"
+
+# ================================================================
+# TEMPORARY: delete after use
+
+.PHONY: vsdiff
+vsdiff:
+	code --diff  $(DEVEL)/Code/$(X)  $(RELEASE)/Code/$(X)
+
+.PHONY: diff
+diff:
+	diff  $(DEVEL)/Code/$(X)  $(RELEASE)/Code/$(X)
 
 # ================================================================
 # Book
@@ -66,16 +80,18 @@ FIFE_SRCS += vendor
 .PHONY: Code
 Code:
 	@echo ""
-	@echo "---------------- Copying Fife/Drum code to $(RELEASE)/Code/"
-	@echo "---- Cleaning up .o files, in ./Code "
+	@echo "---------------- Copying DEVEL/Code to to RELEASE/Code_Candidate/"
+	@echo "---- Cleaning up .o files, in DEVEL/Code "
 	rm -f $(DEVEL)/Code/src_*/*.o
 	rm -f $(DEVEL)/Code/vendor/*/*.o
-	@echo "---- tar up files to be copied, in ./Code "
+	@echo "---- tar up files to be copied, in DEVEL/Code "
 	cd $(DEVEL)/Code; tar -cvzf $(HOME)/foo.tar.gz  $(FIFE_SRCS)
 	@echo ""
-	@echo "---- Unpack tar file into $(RELEASE)/Code_Candidate/"
+	@echo "---- Unpack tar file into RELEASE/Code_Candidate/"
 	cd $(RELEASE); rm -r -f Code_Candidate; mkdir -p Code_Candidate; cd Code_Candidate; tar -xvzf $(HOME)/foo.tar.gz; Strip_LaTeX.py  .
-	@echo "Copied Fife/Drum code to $(RELEASE)/Code_Candidate/"
+	@echo "Copied DEVEL/Code to to RELEASE/Code_Candidate/"
+	@echo "    Please test RELEASE/Code_Candidate"
+	@echo "    then replace RELEASE/Code <= RELEASE/Code_Candidate"
 
 # ================================================================
 # TestRIG
@@ -118,12 +134,17 @@ Slides:
 
 .PHONY: Exercises
 Exercises:
-	@echo "Copying exercises in Exercises/"
-	mkdir -p Exercises
-	rm -r -f Exercises/*
-	cd $(BOOK)/exercises; tar -cvzf $(HOME)/foo.tar.gz  *
-	cd Exercises; tar -xvzf $(HOME)/foo.tar.gz
-	@echo "Created exercises in Exercises/"
+	@echo "---------------- Copying DEVEL/Exercises to RELEASE/Exercises_Candidate/"
+	@echo "---- tar up files to be copied, from DEVEL/Code "
+	cd $(DEVEL)/Exercises; tar -cvzf $(HOME)/foo.tar.gz  .
+	@echo ""
+	@echo "---- Unpack tar file into RELEASE/Exercises_Candidate/"
+	cd $(RELEASE); rm -r -f Exercises_Candidate; mkdir -p Exercises_Candidate; cd Exercises_Candidate; tar -xvzf $(HOME)/foo.tar.gz
+	rm -r -f $(RELEASE)/Exercises_Candidate/*/build*
+	rm -r -f $(RELEASE)/Exercises_Candidate/*/exe_*
+	@echo "Copied DEVEL/Exercises to RELEASE/Exercises_Candidate/"
+	@echo "    Please test RELEASE/Exercises_Candidate"
+	@echo "    then replace RELEASE/Exercises <= RELEASE/Exercises_Candidate"
 
 # ================================================================
 

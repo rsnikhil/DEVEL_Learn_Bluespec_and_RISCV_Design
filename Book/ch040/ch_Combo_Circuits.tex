@@ -91,7 +91,7 @@ hexadecimal and binary literal integers.  Some examples:
 3'b010            // Binary literal, 3 bits wide
 7'b_110_0011      // Binary literal, 7 bits wide
 5'h3              // Hex literal, 5 bits wide
-32'h3             // Hex literal, 5 bits wide
+32'h3             // Hex literal, 32 bits wide
 32'h_efff_0f17    // Hex literal, 32 bits wide (an AUIPC instruction)
 'h23              // Hex literal, context determines width
 \end{Verbatim}
@@ -125,10 +125,10 @@ extended, if necessary to fit the context where it is used.
 
 \index[BSV]{Identifer syntax}
 
-The syntax of an identifier (name) in {\BSV} follows the same conventions
-as in many programming languages: any sequence of alphabets, digits
-and underscore characters, with the first letter always being an
-alphabet.
+The syntax of an identifier (name) in {\BSV} follows the same
+conventions as in many programming languages: any sequence of
+alphabets, digits and underscore characters, with the first letter
+always being alphabetic.
 
 \index[BSV]{Identifiers!First letter lower- or uppercase}
 \index[BSV]{Identifiers!Type: initial uppercase letter}
@@ -148,8 +148,8 @@ The identifiers \verb|True| and \verb|False| are predefined value
 constants (they begin with an uppercase letter) representing standard
 boolean values.  In the enum type-definition in
 Section~\ref{BSV_enum_types}, the identifiers \verb|OPCLASS_SYSTEM|,
-\verb|OPCLASS_CONTROL|, \verb|OPCLASS_INT| and \verb|OPCLASS_MEM| are
-also value constants.
+\verb|OPCLASS_CONTROL|, \verb|OPCLASS_INT|, \verb|OPCLASS_MEM| and
+\verb|OPCLASS_FENCE| are also value constants.
 
 The identifiers \verb|Bool| and \verb|Bit| are predefined type
 constants.  In the enum type-definition in
@@ -297,7 +297,7 @@ because they have to be evaluted statically by {\bsc}.  Consider a
 generic function that takes two arguments of type {\tt Bit\#(m)} and
 {\tt Bit\#(n)} and returns the concatenation of these bit-vectors: its
 output type is {\tt Bit\#(m+n)}.  By limiting the available arithmetic
-\emph{bsc} can resolve it statically.  This is a somewhat advanced
+{\bsc} can resolve it statically.  This is a somewhat advanced
 topic which we postpone until Section~\ref{Sec_Typeclasses}.
 
 \end{minipage}}
@@ -345,16 +345,16 @@ values in the range 0..7; the latter in the range -4..3.
 \index[BSV]{Bit Vectors}
 \index[BSV]{Types!{\tt Bit\#(n)}}
 
-The simplest, and lowest-level type in {\BSV} is the bit-vector (a vector
-made up of a particular number bits).  It is ``lowest-level'' in that
-it is the only type that directly maps into hardware and can be
-observed directly in hardware with a waveform viewer or an
-oscilloscope.  Later we will see that in {\BSV} one can define more
-abstract types such as integers, booleans, vectors and arrays, lists,
-structs (records), tagged unions (algebraic types), trees, and so on.
-These are all language-level abstractions, {\ie} a language-level view
-of bits; ultimately, all values are represented in hardware as
-bit-vectors.
+The simplest and lowest-level type in {\BSV} is the bit-vector (a
+vector made up of a particular number of bits).  It is
+``lowest-level'' in that it is the only type that directly maps into
+hardware and can be observed directly in hardware with a waveform
+viewer or an oscilloscope.  Later we will see that in {\BSV} one can
+define more abstract types such as integers, booleans, vectors and
+arrays, lists, structs (records), tagged unions (algebraic types),
+trees, and so on.  These are all language-level abstractions, {\ie} a
+language-level view of bits; ultimately, all values are represented in
+hardware as bit-vectors.
 
 The {\BSV} statement:
 
@@ -386,9 +386,17 @@ The initial value's size can be left unspecified:
 \end{Verbatim}
 }
 
-{\bsc} will infer that it should be 32 bits, and will zero-extend
-accordingly.  If the constant is too large for the context, {\bsc}
-will not silently truncate it; it will give an error-message instead.
+As explained in Section~\ref{BSV_hex_bin_literals}, the literal
+constant \verb|'h_1000| is of unspecified size (as opposed to
+\verb|32'h_1000| which has precisely 32 bits).  Technically, the
+literal constant has {\BSV} type {\tt Integer}, for true, unbounded,
+mathematical integers (see also Section~\ref{BSV_ints}).  {\bsc}
+implicitly applies the {\tt fromInteger} function to this constant,
+which converts it from {\tt Integer} to the type required by the
+context, here \verb|Bit#(32)|.  If the constant is too large for the
+context, {\bsc} will not silently truncate it; it will give an
+error-message instead.
+
 
 % ================================================================
 
@@ -446,13 +454,13 @@ don't care about its initial value, like this:
 conveys to the human reader that the value here is irrelevant.
 
 Second, it can result in more efficient circuitry.  If we had said
-``0'', for example, the \emph{bsc} compiler has to create circuitry
+``0'', for example, the {\bsc} compiler has to create circuitry
 ensuring that field's value is 0. By saying ``\verb|?|'', the
-\emph{bsc} compiler is allowed to pick any value that minimizes
+{\bsc} compiler is allowed to pick any value that minimizes
 circuitry.
 
 Third, in places where it does not result in additional hardware, the
-\emph{bsc} compiler usually injects the specific value
+{\bsc} compiler usually injects the specific value
 \verb|'h_AAAA_AAAA| (of suitable bit-width).  While debugging,
 observing such a value in some computation is often a clue that
 something is wrong.
@@ -525,7 +533,7 @@ strict about matching sizes.  For example, this statement:
 \end{Verbatim}
 }
 
-will be reported as a type-error by the \emph{bsc} compiler because
+will be reported as a type-error by the {\bsc} compiler because
 the slice-expression on the right-hand side has type \verb|Bit#(11)|
 which does not match the declared type \verb|Bit#(12)|.
 
@@ -627,7 +635,7 @@ if-then-else statement, where any non-zero numeric value, or non-NULL
 pointer is considered ``True''.
 
 In {\BSV}, \verb|Bool| and \verb|Bit#(1)| are \emph{distinct} types,
-{\ie} \emph{bsc}'s type-checking will complain if one is used where
+{\ie} {\bsc}'s type-checking will complain if one is used where
 the other is expected.  This is because not all \verb|Bit#(1)| values
 are meaningful as boolean values.
 
@@ -704,8 +712,8 @@ Section~\ref{Bit_Vector_Ops}) are defined on both types.
 unbounded, ranging from minus infinity to plus infinity (though in
 practice limited by the amount of memory in your computer!).  Being
 unbounded, they cannot be represented in any fixed-size hardware.
-\verb|Integer| is used only for compile-time integers, such verbosity
-level for debugging, or the size of a vector of interfaces.
+\verb|Integer| is used only for compile-time integers, such as a
+verbosity level for debugging, or the size of a vector of interfaces.
 
 Observe that all four type names begin with an uppercase letter, as
 discussed in Section~\ref{BSV_Syntax_of_Identifiers}.
@@ -939,13 +947,14 @@ truncation and extension, arithmetic (like \verb|+|, \verb|-|,
 \verb|*|), shifts (\verb|<<| and \verb|>>|), and multiplexers
 (discussed in Section~\ref{BSV_Combo_Circuits_if_then_else}, later).
 
-In {\BSV}, and Verilog/SystgemVerilog RTL, we consider such operators as
-``primitive''.  In fact, such operators must themselves be implemented
-using lower-level circuit primitives such as AND, OR, and NOT gates
-which, in turn, must be implemented with even lower-level circuit
-structures such as transistors.  We do not concern ourselves with such
-lower-level implementation because nowadays this is performed for us
-automatically by excellent so-called ``synthesis'' tools.
+In {\BSV}, and Verilog/SystemVerilog RTL, we consider such operators
+as ``primitive''.  In fact, such operators must themselves be
+implemented using lower-level circuit primitives such as AND, OR, and
+NOT gates which, in turn, must be implemented with even lower-level
+circuit structures such as transistors.  We do not concern ourselves
+with such lower-level implementation because nowadays this is
+performed for us automatically by excellent so-called ``synthesis''
+tools.
 
 % ----------------------------------------------------------------
 
@@ -1209,16 +1218,16 @@ memory-access path.
 \index[BSV]{Typeclasses}
 \index[BSV]{Typeclass!instance of}
 
-Because we said ``\verb|deriving(Bits)|'', the \emph{bsc} compiler
+Because we said ``\verb|deriving(Bits)|'', the {\bsc} compiler
 will automatically represent them with the obvious codes 0, 1, 2, 3
 and 4 in a minimal bit-width (\verb|Bit#(3)|).
 
 For a type that will only be used at compile time and never for a
 run-time value, there is no need to have a hardware reprsentation in
 bits.  If we \emph{do} want a custom representation in bits, {\BSV}
-has a mechanism by which we can specify this, but don't discuss this
-further here because it involves a more advqnced {\BSV} capability
-called ``typeclasses'' and ``typeclass instances''.
+has a mechanism by which we can specify this, but we don't discuss
+this further here because it involves a more advanced {\BSV}
+capability called ``typeclasses'' and ``typeclass instances''.
 
 % ================================================================
 
@@ -1228,7 +1237,7 @@ called ``typeclasses'' and ``typeclass instances''.
 
 \index[BSV]{deriving Eq@{\tt deriving Eq}}
 
-Because we said ``\verb|deriving(Eq)|'', the \emph{bsc} compiler will
+Because we said ``\verb|deriving(Eq)|'', the {\bsc} compiler will
 automatically define the ``equality'' (and ``inequality'') functions
 for values of this new type, in the natural and obvious way (here,
 just compare the bit representations for equality).  For other
@@ -1260,7 +1269,7 @@ list of labels in the \verb|enum| definition shown in
 Section~\ref{BSV_enum_types} (starting at zero).
 
 Because we said ``\verb|deriving(FShow)|'' in the \verb|enum|
-declararion, the \emph{bsc} compiler will automatically define an
+declararion, the {\bsc} compiler will automatically define an
 ``\verb|fshow()|'' function for this type: if we print as follows:
 
 {\footnotesize
@@ -1350,8 +1359,8 @@ The 32-bit \verb|instr| argument is fed into the circuits for
 \verb|is_legal_BRANCH()| (hardware schematic in
 Figure~\ref{Fig_Combo_Is_Legal_BRANCH}), \verb|is_legal_JAL()| and
 \verb|is_legal_JALR()| which are OR'd to produce a \verb|Bool| output
-which, in turn, is used to select one of two 2-bit constant values,
-producing a final 2-bit result.  The multiplexer, also called a
+which, in turn, is used to select one of two 3-bit constant values,
+producing a final 3-bit result.  The multiplexer, also called a
 ``MUX'' for short, is a primitive combinational circuit.
 
 If-then-elses and conditional expressions can of course be nested:
@@ -1594,7 +1603,7 @@ the remaining code will work for RV64 as well.
 Instead of editing the line defining {\tt XLEN}, we can automate that
 choice by using macros and the preprocessor during compilation.
 
-Just like in Verilog, SystemVerilog and C/C++, the \emph{bsc} compiler
+Just like in Verilog, SystemVerilog and C/C++, the {\bsc} compiler
 runs {\BSV} source code through a ``preprocessor'' before compilation,
 which can perform simple text (``macro'') substitutions.  Using this
 facility, we can pass an argument to the compiler that has the effect
@@ -1611,7 +1620,7 @@ As in Verilog and SystemVerilog, preprocessor directives begin with a
 \verb|`| character (back-tick) (analogous to \verb|#ifdef| in the
 C/C++ preprocessor).
 
-When we invoke the \emph{bsc} compiler, we can pass it command line
+When we invoke the {\bsc} compiler, we can pass it command line
 arguments \verb|-DRV32| or \verb|-DRV64|; the preprocessor will then
 select the appropriate \verb|typedef| line.  Thus, we can write common
 code that will work for both RV32 and RV64.  The integer value

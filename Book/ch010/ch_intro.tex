@@ -554,10 +554,18 @@ inputs of state elements, as illustrated in
 Figure~\ref{Fig_BSV_Digital_Circuits}.
 \begin{figure}[htbp]
   \centerline{\includegraphics[width=\textwidth]{Fig_BSV_Digital_Circuits}}
-  \caption{\label{Fig_BSV_Digital_Circuits}
-           Digital circuits consist of state elements interconnected
-	   with acyclic combinational circuits}
+
+  \caption{\label{Fig_BSV_Digital_Circuits} Digital circuits consist
+           of state elements interconnected with acyclic combinational
+           circuits.}
+
 \end{figure}
+
+Connecting the output of a combinational circuit to the input of
+another combinational circuit just builds a larger combinational
+circuit ({\eg} the edge from the first to the second combinational
+circuit in the figure).
+
 
 State elements are \emph{storage} elements.  Combinational circuits
 are \emph{acyclic} networks of \emph{logic gates}.  A logic gate is a

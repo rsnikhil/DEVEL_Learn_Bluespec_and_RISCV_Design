@@ -94,6 +94,8 @@ FIGS += RSN_2025-10-15.000.00_CPU_Verif_Complexity.png
 # FIGS += Fig_tandem_verification.png
 FIGS += RSN_2025-10-15.001.00_Symmetric_Tandem_Verification.png
 
+FIGS += RSN_2026-06.004.00_RISCV_ISA_LUI_AUIPC.png
+
 .PHONY: help
 help:
 	@echo "Targets:"
@@ -106,8 +108,12 @@ png: $(FIGS)
 	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
 
 DIAGRAMS_2025 = $(HOME)/Diagrams/2025
+DIAGRAMS_2026 = $(HOME)/Diagrams/2026
 
 RSN_%.png: $(DIAGRAMS_2025)/RSN_%.svg
+	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
+
+RSN_%.png: $(DIAGRAMS_2026)/RSN_%.svg
 	inkscape --export-filename=$@  --export-area-drawing  -d 300 -y 0.0 $<
 
 # ================================================================

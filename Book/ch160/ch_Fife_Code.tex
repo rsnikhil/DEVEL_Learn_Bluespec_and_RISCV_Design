@@ -444,7 +444,7 @@ DMem, and an incoming \verb|FIFOF_I| from Retire for updating the
 register file and scoreboard, which are instantiated inside this
 module.
 
-\SHOWCODE{Code_Extracts/Fife_RR_RW_IFC.tex}
+\SHOWCODE{Code_Extracts/Fife_RR_WB_IFC.tex}
 
 % ================================================================
 
@@ -536,7 +536,7 @@ and we can convert a \verb|Bit#(32)| value into a \verb|Vector #(32, Bit #(1))| 
 
 The first part of the \verb|mkRR_RW| module, instantiating its STATE, is shown below:
 
-\SHOWCODE{Code_Extracts/Fife_mkRR_RW1.tex}
+\SHOWCODE{Code_Extracts/Fife_mkRR_WB1.tex}
 
 It instantiates FIFOs for all the forward and backward flows, and it
 instantiates the GPRs register file \verb|gprs|
@@ -545,7 +545,7 @@ instantiates the GPRs register file \verb|gprs|
 \verb|mkRR_RW| module, implementing its BEHAVIOR for the forward flow,
 is shown below:
 
-\SHOWCODE{Code_Extracts/Fife_mkRR_RW2.tex}
+\SHOWCODE{Code_Extracts/Fife_mkRR_WB2.tex}
 
 In line 6, we observe the first element in the \verb|f_Decode_to_RR|
 FIFO.  Note, the \verb|.first| method is non-destructive, {\ie} it
@@ -606,7 +606,7 @@ or DMem).
 The third part of the \verb|mkRR_RW| module, implementing its BEHAVIOR
 for the backward flow, is shown below:
 
-\SHOWCODE{Code_Extracts/Fife_mkRR_RW3.tex}
+\SHOWCODE{Code_Extracts/Fife_mkRR_WB3.tex}
 
 We pop the message \verb|x| from the \verb|f_RW_from_Retire| FIFO.  We
 perform its specified scoreboard-release for register rd.  If the rd
@@ -614,7 +614,7 @@ value is to be committed, we write it into GPR [rd].  The fourth and
 final part of the \verb|mkRR_RW| module, defining its INTERFACE, is
 shown below:
 
-\SHOWCODE{Code_Extracts/Fife_mkRR_RW4.tex}
+\SHOWCODE{Code_Extracts/Fife_mkRR_WB4.tex}
 
 It simply lifts the FIFO interfaces to this module's interface.
 

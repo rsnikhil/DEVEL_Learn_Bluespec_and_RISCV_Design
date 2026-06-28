@@ -336,7 +336,7 @@ and the individual fields.
 
 A memory-request in RV32I is either a FETCH, a LOAD, a STORE, a FENCE,
 or a FENCE.I.\footnote{A FETCH is just a LOAD, but it is useful to
-distinguish this for debuggin.}  We could define an enum type for
+distinguish this for debugging.}  We could define an enum type for
 this:
 
 {\footnotesize
@@ -350,16 +350,16 @@ deriving (Bits, FShow, Eq);
 \end{Verbatim}
 }
 
-which will use a 2-bit encoding (0 for LOAD, 1 for STORE, 2 for
-FENCE).  However, we look to the future where we might extend {\FIFE}
-and {\DRUM} to implement the ``A'' extension (for AMO or ``Atomic
-Memory Operations'').  The RISC-V ISA Unprivileged Spec document,
-Chapter 8, describes additional memory operations LR (Load-Reserved),
-SC (Store-Conditional), AMOSWAP, AMOADD, AMOXOR, AMOAND, AMOOR,
-AMOMIN, AMOMAX, AMOMINU, and AMOMAXU, each of which comes in a 32-bit
-version (in RV32 and RV64) and a 64-bit version (in RV64).  These
-operations are coded with 5 bits in the instruction
-(\verb|instr[31:27]|, which we call ``{\tt funct5}'').
+which will use a 3-bit encoding (0 for FETCH, 1 for LOAD, 2 for STORE,
+3 for FENCE and 4 for FENCE\_I).  However, we look to the future where
+we might extend {\FIFE} and {\DRUM} to implement the ``A'' extension
+(for AMO or ``Atomic Memory Operations'').  The RISC-V ISA
+Unprivileged Spec document, Chapter 8, describes additional memory
+operations LR (Load-Reserved), SC (Store-Conditional), AMOSWAP,
+AMOADD, AMOXOR, AMOAND, AMOOR, AMOMIN, AMOMAX, AMOMINU, and AMOMAXU,
+each of which comes in a 32-bit version (in RV32 and RV64) and a
+64-bit version (in RV64).  These operations are coded with 5 bits in
+the instruction (\verb|instr[31:27]|, which we call ``{\tt funct5}'').
 
 Accordingly, we use a 5-bit encoding for the memory request type.
 When we implement the A extension, we will directly use the 5-bit

@@ -21,10 +21,23 @@ ensure you have the latest version!}
 
 \end{minipage}}
 
-\vspace{5ex}
-% ----------------
+For all the exercises you will need an installation of two free and
+open-source tools, the {\bsc} compiler and the Verilator compiler.
 
-% \footnotesize
+For {\bsc}, see: \url{https://github.com/B-Lang-org/bsc}
+\begin{quote}
+    Download and installation info \\
+    {\BSV} Language Reference Guide (PDF) \\
+    {\BSV} Libraries Reference Guide (PDF) \\
+    {\bsc} User Guide (PDF) \\
+    (PDFs also available in {\bsc} installation directory).
+\end{quote}
+
+For Verilator, see \url{https://www.veripool.org/verilator}
+\begin{quote}
+    Download and installation info \\
+    Verilator user manual \\
+\end{quote}
 
 % ****************************************************************
 
@@ -39,8 +52,76 @@ ensure you have the latest version!}
 
 (Refer Section~\ref{Sec_Hello_World}.)
 
-Please see directory: \hm {\tt Exercises/Ex-03-A-Hello-World/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-03-A-Hello-World/}
+
+\begin{enumerate}
+
+  \item Observe the version of bsc and verilator in your installation
+    by typing these commands (your versions may later versions):
+
+    \begin{verbatim}
+    $ bsc -v
+    Bluespec Compiler, version 2024.01 (build ae2a2fc)
+    This is free software; for source code and copying conditions, see
+    https://github.com/B-Lang-org/bsc
+
+    $ verilator --version
+    Verilator 5.018 2023-10-30 rev v5.018-38-g344f87abe
+    \end{verbatim}
+
+    Observe a a full list of command-line options for bsc and verilator by typing:
+
+
+    \begin{verbatim}
+    $ bsc --help
+    $ verilator --help
+    \end{verbatim}
+
+    The \emph{Bluespec Compiler (BSC) User Guide} is a detailed guide on using {\bsc}.
+
+  \item Compile and run the given {\BSV} program \verb|Top.bsv| using both
+    Bluesim simulation and Verilator Verilog simulation.
+
+    For help:
+    \begin{verbatim}
+    $ make    or    $ make help
+    \end{verbatim}
+
+    For Bluesim:
+    \begin{verbatim}
+    $ make b_compile
+    $ make b_link
+    $ make b_sim
+    Hello, World!                        # output
+    \end{verbatim}
+
+    For Verilator:
+    \begin{verbatim}
+    $ make v_compile
+    $ make v_link
+    $ make v_sim
+    Hello, World!                        # output
+    \end{verbatim}
+
+    For each of the above ``\verb|make|'' commands, make sure you
+    understand what it does, by examining the Makefile, or using the
+    \verb|--dry-run| flag like this, or examining the terminal when
+    you actually run 'make'.
+
+    \begin{verbatim}
+    $ make <target> --dry-run
+    \end{verbatim}
+
+    You can also type ``\verb|make b_all|'' to or ``\verb|make v_all|''
+    to perform all three actions: compile, link and run (simulate).
+
+    Once you understand these actions, you should be able to create
+    your own Makefiles for bsc and Verilator.
+
+  \item Comment-out the \verb|$finish ()| statement from the code in
+    \verb|Top.bsv|, recompile and run, and observe the behavior.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -49,8 +130,31 @@ and its README.
 
 (Refer Section~\ref{Sec_Top_and_DUT}.)
 
-Please see directory: \hm {\tt Exercises/Ex-03-B-Top-and-DUT/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-03-B-Top-and-DUT/}
+
+\begin{enumerate}
+
+  \item Compile, link, and run the given example, in either Bluesim
+    simulation or in Verilator Verilog simulation, using the Makefile
+    commands (same as last exercise: \verb|b_compile|, \verb|b_link|,
+    \verb|b_run|, \verb|v_compile|, \verb|v_link|, \verb|v_run|).
+
+  \item Try the compile steps above after removing the ``\verb|-u|''
+    command-line flag and observe the behavior.
+
+  \item Change \verb|Bit#(11)| to \verb|Bit#(8)| in \verb|DUT.bsv|;
+    retry the compile-link-run, and observe the behavior.
+
+  \item Write down a BSV hexadecimal integer literal whose value is
+    equal to decimal 22 (hexadecimal integers in BSV use the same
+    notation as in Verilog and SystemVerilog (see book Section 4.2).
+
+  \item Add another \verb|$display()| statement that reports the
+    number of years that have elapsed from the publication of
+    Kernighan and Ritchie's book to today.
+
+\end{enumerate}
+
 
 % ================================================================
 
@@ -59,8 +163,54 @@ and its README.
 
 (Refer Section~\ref{Sec_Module_and_Interface}.)
 
-Please see directory: \hm {\tt Exercises/Ex-03-C-Module-and-Interface/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-03-C-Module-and-Interface/}
+
+\begin{enumerate}
+
+  \item Compile, link and run the given program (\verb|Top.bsv|,
+    \verb|DUT.bsv|) using the Makefile.
+
+  \item In \verb|DUT.bsv|, in ``\verb|export DUT_IFC (..)|'', remove
+    the ellipses ``\verb|(..)|''.
+
+    Try to compile-link-run, and observe the behavior.
+
+  \item Define a third string, say \verb|"publisher"|, in the DUT
+    package; add it as a third tuple component to the
+    \verb|m_title_authors| method output; add a \verb|$display()| line
+    in \verb|mkTop| to print it.
+
+  \item In \verb|DUT.bsv|, define a second module \verb|mkDUT2| with
+    the same \verb|DUT_IFC| interface.  This module's methods should
+    return information about the following book:
+
+    \begin{quote}
+      ``Introduction to VLSI systems''
+      Carver Mead and Lynn Conway
+      Addison-Wesley, January 1, 1980
+    \end{quote}
+
+    In \verb|Top.bsv|, instantiate \verb|mkDUT2| in addition to
+    instantiating \verb|mkDUT|.
+
+    Add some \verb|$display| statements to print information from this
+    module.
+
+    Some nice quotes from the book:
+
+    \begin{quote}
+      ``We believe that only by carrying along the least amount of
+        unnecessary mental baggage at each step in such a study, will
+        the student emerge with a good overall understanding of the
+        subject.''
+    \end{quote}
+	
+
+    \begin{quote}
+      ``An atmosphere of excitement and anticipation pervades this field.''
+    \end{quote}
+
+\end{enumerate}
 
 % ****************************************************************
 
@@ -75,8 +225,28 @@ and its README.
 
 (Refer Sections~\ref{Sec_BSV_Bit_Vectors}-\ref{Sec_Dont_Care_Values}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-A-Bit-Vectors/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-04-A-Bit-Vectors/}
+
+\begin{enumerate}
+
+  \item Note that, compared to previous exercises, the Makefile uses
+    more bsc flags to organize source files, intermediate files, etc.
+
+    When you use any of the ``make'' commands, it shows the {\bsc}
+    command that it performs.  Study the {\tt bsc} commands and make
+    sure you understand all the command-line flags.
+
+    \hm \verb|bsc -help|
+
+    shows a one-line help for each command-line arg.  The \emph{BSC
+    Users Guide} provides more details.
+
+  \item Compile and run the code using Verilator simulation or Bluesim
+    simulation.
+
+  \item \verb|src_BSV/Top.bsv| contains suggestions of several variations to try.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -85,8 +255,14 @@ and its README.
 
 (Refer Section~\ref{Bit_Vector_Ops}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-B-Bit-Vectors-Slicing/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-04-B-Bit-Vectors-Slicing/}
+
+\begin{enumerate}
+  \item Compile and run the code using Verilator simulation or Bluesim simulation.
+
+  \item \verb|src_BSV/Top.bsv| contains suggestions of several variations to try.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -95,8 +271,17 @@ and its README.
 
 (Refer Section~\ref{BSV_functions}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-C-Bit-Vectors-Operations/} \\
-and its README.
+Please see directory: \hm {\tt Exercises/Ex-04-C-Bit-Vectors-Operations/}
+
+\begin{enumerate}
+
+  \item Build and run the code using Verilator simulation or Bluesim simulation.
+
+  \item Try variations: change bit-widths and values of a and b.
+
+  \item Try variations: change all \verb|Bit #(n)| to \verb|Int #(n)|.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -105,8 +290,34 @@ and its README.
 
 (Refer Section~\ref{BSV_functions}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-D-Decode-Imm/} \\
-and its README.
+\begin{enumerate}
+
+  \item Write functions with the following types:
+
+    \begin{verbatim}
+    function Bit #(12) instr_imm_I (Bit #(32) instr);
+    function Bit #(12) instr_imm_S (Bit #(32) instr);
+    function Bit #(13) instr_imm_B (Bit #(32) instr);
+    function Bit #(20) instr_imm_U (Bit #(32) instr);
+    function Bit #(21) instr_imm_J (Bit #(32) instr);
+    \end{verbatim}
+
+    These pick out the "immediate" fields in I-, S-, B-, U- and J-type
+    instructions, respectively, and rearrange the bits as appropriate
+    to form the proper immediate value.
+
+    Note: These functions exist already in the file
+    \verb|Code/src_Common/instr_Bits.bsv|.  We recommend either
+    writing your solutions without looking at those solutions or,
+    study those solutions to understand them, put them aside, and then
+    try writing them yourself from scratch.
+
+  \item Write a testbench that invokes each of these functions with
+    32-bit constants (representing instructions) and prints out the
+    inputs and outputs.  Compile and run them and visually inspect the
+    outputs for correctness.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -115,8 +326,50 @@ and its README.
 
 (Refer Section~\ref{BSV_functions_2}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-E-is-legal-XXX/} \\
-and its README.
+\begin{enumerate}
+
+  \item In the file \verb|Code/src Common/Instr Bits.bsv| locate the functions:
+
+    \begin{tabbing}
+      \hm \verb|instr_opcode()| \\
+      \hm \verb|instr_funct3()| \\
+      \hm \verb|is_legal_BRANCH()|
+    \end{tabbing}
+
+    and make sure you understand them thoroughly.
+
+  \item  Observe that the file contains similar functions, such as:
+
+
+    \begin{tabbing}
+      \hm \= \verb|is_legal_OP_IMM()| \hm \= \kill
+          \> \verb|is_legal_JAL()|        \> for the JAL opcode \\
+          \> \verb|is_legal_JALR()|       \> for the (JALR opcode \\
+          \> \verb|is_legal_OP()|         \> for LUI, AUIPC, ADD, SLT, OR, AND, ... opcodes \\
+          \> \verb|is_legal_OP_IMM()|     \> for ADDI, SLTI, ..., ORI, ANDI, ... opcodes \\
+          \> \verb|is_legal_LOAD()|       \> for LB, LH, LW, LBU, LHU opcodes \\
+          \> \verb|is_legal_Mem()|        \> for SB, SH, SW opcodes
+    \end{tabbing}
+
+  which, in turn, use functions like:
+
+    \begin{tabbing}
+      \hm \verb|instr_rs1()| \\
+        \hm \verb|str_rs2()| \\
+        \hm \verb|str_rd()|
+    \end{tabbing}
+
+  which are also in the file.
+
+  Study the code and check that the functions are correct (refer to
+  the ``RV32I Base Instruction Set'' listing in ``Chapter 24 RV32/64G
+  Instruction Set Listings'' in the RISC-V Unprivileged ISA
+  specification document, which lists 40 RV32I instructions).
+
+  A visual check is sufficient, but feel free to write a testbench and
+  tests and run them if you feel inspired to do so.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -126,7 +379,69 @@ and its README.
 (Refer Section~\ref{BSV_small_testbench}.)
 
 Please see directory: \hm {\tt Exercises/Ex-04-F-FSM-Testbench/}
-\\ and its README.
+
+\begin{enumerate}
+
+  \item Compile and run the code using Verilator simulation or Bluesim simulation.
+
+  \item Add more actions to the testbench to test more 32-bit values
+    with \verb|is_legal_BRANCH()|.
+
+  \item Delete the ``\verb|Bit #(7) opcode_BRANCH|'' constant
+    definition and the \verb|is_legal_BRANCH()| function from Top.bsv.
+    Instead, replace them with one line:
+
+    \hmm \verb|import Instr_Bits :: *;|
+
+    Replace the existing Makefile (which just includes \verb|../Include.mk|)
+    with your own (by just copying \verb|../Include.mk| as \verb|./Makefile|).
+
+    In your Makefile, edit the BSCPATH definition to include a path to
+    where the \verb|Instr_Bits.bsv| file is located. Replace:
+
+    \hmm \verb|BSCPATH = src_BSV:+|
+
+    with
+
+    \hmm \verb|BSCPATH = ../../Code/src_Common:src_BSV:+|
+
+    Make sure your Makefile still works: compile and run the test as
+    in the previous exercises.
+
+  \item Modify the testbench to test more 32-bit values with other
+    \verb|is_legal_XXX()| functions.
+
+  \item The testbench constructs 32-bit BRANCH instructions with lines like this:
+
+    \hmm \verb|Bit #(32) instr_BEQ = {7'h0, 5'h9, 5'h8, 3'b000, 5'h3, 7'b_110_0011};|
+
+    Instead, define a function to \emph{create} a 32-bit BRANCH
+    instruction, given a 13-bit immediate field, rs2 and rs1 values,
+    and a funct3 field:
+
+    \begin{verbatim}
+   function Bit #(32) mkBRANCH_Instr (Bit #(13) pc_offset,
+                                      Bit #(5)  rs2,
+                                      Bit #(5)  rs1,
+                                      Bit #(3)  funct3);
+      ... <fill in this code> ...
+   endfunction
+    \end{verbatim}
+
+    Refer to Figure~\ref{Fig_B_imm} in the book (or to RISC-V
+    Unpriviliged ISA spec document) for how a 13-bit PC-offset is
+    encoded into the 12-bit immediate of a B-type instruction.  Your
+    code should also check that bit [0] of the PC-offset is zero.
+
+    In the testbench, use this function to create BRANCH instructions,
+    instead of lines like this:
+
+    \hmm \verb|Bit #(32) instr_BEQ = {7'h0, 5'h9, 5'h8, 3'b000, 5'h3, 7'b_110_0011};|
+
+    Also: instead of a constant like \verb|3'b000|, use the symbolic
+    name \verb|funct3_BEQ| that is defined in the file \verb|Instr_Bits.bsv|.
+
+\end{enumerate}
 
 % ================================================================
 
@@ -135,8 +450,49 @@ Please see directory: \hm {\tt Exercises/Ex-04-F-FSM-Testbench/}
 
 (Refer Sections~\ref{BSV_enum_types}-\ref{BSV_case_expressions}.)
 
-Please see directory: \hm {\tt Exercises/Ex-04-G-Enums-Muxes/} \\
-and its README.
+\begin{enumerate}
+
+  \item Write a testbench for the \verb|instr_opclass()| function. Try
+    it with different 32-bit instructions to produce the op class, and
+    print out the op class.  When printing the op class, try printing
+    it as an integer, and also symbolically using \verb|fshow()|.
+
+  \item Write a new version of the \verb|instr_opclass()| function
+    that expresses a parallel MUX instead of a priority MUX (see
+    Figure~\ref{Fig_Combo_Multiplexer_Parallel}). The key ideas are:
+
+    \begin{itemize}
+
+      \item Define a value \verb|x_CONTROL| that is either the
+        bit-representation of \verb|OPCLASS_CONTROL|, or a zero
+        bitvector (of the same bit-width) if the boolean values of
+        \verb|is_legal_BRANCH()|, \verb|is_legal_JAL()| and
+        \verb|is_legal_JALR()| are all false.  We can implement this
+        by converting that boolean result to a 1-bit value and then
+        replicating it to the width of the \verb|OpClass| type, then
+        bitwise-AND'ing this with the bits of \verb|OPCLASS_CONTROL|.
+
+      \item Similarly, define values \verb|x_INT|, \verb|x_MEM| and
+        \verb|x_SYSTEM| that are either \verb|OPCLASS_INT|,
+        \verb|OPCLASS_MEM|, \verb|OPCLASS_SYSTEM| or 0 depending on
+        whether the instruction is an integer, memory or system
+        instruction.
+
+      \item Finally, bitwise-OR the four \verb|x_XXX| values together
+        and convert the bits back into the {\tt OpClass} type to
+        produce the result.
+
+    \end{itemize}
+
+  \item Test your new version of the \verb|instr_opclass()| function
+    in your testbench.
+
+  \item There are three ways to write conditionals: if-then-else,
+    ``\mbox{(eb ? e1 : e2)}'', and case expressions.  Try these
+    alternatives in any of the previous examples or in the Drum/Fife
+    code files.
+
+\end{enumerate}
 
 % ****************************************************************
 
